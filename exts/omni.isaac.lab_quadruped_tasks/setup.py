@@ -2,7 +2,6 @@
 
 import itertools
 import os
-import platform
 import toml
 
 from setuptools import setup
