@@ -17,8 +17,9 @@ from omni.isaac.lab.managers import SceneEntityCfg
 from omni.isaac.lab.managers import TerminationTermCfg as DoneTerm
 from omni.isaac.lab.scene import InteractiveSceneCfg
 from omni.isaac.lab.sensors import ContactSensorCfg
-from omni.isaac.lab.sim import DistantLightCfg, GroundPlaneCfg
+from omni.isaac.lab.sim import DomeLightCfg, GroundPlaneCfg
 from omni.isaac.lab.utils import configclass
+from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
 from omni.isaac.lab.utils.noise import AdditiveGaussianNoiseCfg as GaussianNoise
 from omni.isaac.lab_assets.unitree import UNITREE_GO2_CFG
 
@@ -36,7 +37,12 @@ class QuadrupedSceneCfg(InteractiveSceneCfg):
 
     # distant light
     light = AssetBaseCfg(
-        prim_path="/World/distantLight", spawn=DistantLightCfg(color=(0.9, 0.9, 0.9), intensity=2500.0)
+        prim_path="/World/skyLight",
+        spawn=DomeLightCfg(
+            intensity=750.0,
+            color=(0.9, 0.9, 0.9),
+            texture_file=f"{ISAAC_NUCLEUS_DIR}/Materials/Textures/Skies/PolyHaven/kloofendal_43d_clear_puresky_4k.hdr",
+        ),
     )
 
     # go2 robot
@@ -218,7 +224,7 @@ class QuadrupedEnvCfg(ManagerBasedRLEnvCfg):
     """Configuration for the quadruped environment"""
 
     # Scene settings
-    scene: QuadrupedSceneCfg = QuadrupedSceneCfg(num_envs=128, env_spacing=2.0)
+    scene: QuadrupedSceneCfg = QuadrupedSceneCfg(num_envs=1024, env_spacing=2.0)
     # Basic settings
     observations: ObservarionsCfg = ObservarionsCfg()
     actions: ActionsCfg = ActionsCfg()
@@ -233,5 +239,6 @@ class QuadrupedEnvCfg(ManagerBasedRLEnvCfg):
         """Post initialization"""
         self.decimation = 4
         self.episode_length_s = 20.0
+        self.sim.render_interval = self.decimation
         # simulation settings
         self.sim.dt = 1 / 200.0
