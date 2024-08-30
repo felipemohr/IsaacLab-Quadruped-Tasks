@@ -14,7 +14,6 @@ parser = argparse.ArgumentParser(description="Train an RL agent with RSL-RL.")
 parser.add_argument("--video", action="store_true", default=False, help="Record videos during training.")
 parser.add_argument("--video_length", type=int, default=200, help="Length of the recorded video (in steps).")
 parser.add_argument("--video_interval", type=int, default=20000, help="Interval between video recordings (in steps).")
-parser.add_argument("--cpu", action="store_true", default=False, help="Use CPU pipeline.")
 parser.add_argument("--num_envs", type=int, default=None, help="Number of environments to simulate.")
 parser.add_argument("--max_iterations", type=int, default=None, help="Maximum number of iterations to train.")
 parser.add_argument("--save_interval", type=int, default=None, help="The number of iterations between saves")
@@ -57,7 +56,9 @@ torch.backends.cudnn.benchmark = False
 def main():
     """Train with RSL-RL agent."""
     # parse configuration
-    env_cfg: ManagerBasedRLEnvCfg = parse_env_cfg(args_cli.task, use_gpu=not args_cli.cpu, num_envs=args_cli.num_envs)
+    env_cfg: ManagerBasedRLEnvCfg = parse_env_cfg(
+        task_name=args_cli.task, device=args_cli.device, num_envs=args_cli.num_envs
+    )
     agent_cfg: RslRlOnPolicyRunnerCfg = cli_args.parse_rsl_rl_cfg(args_cli.task, args_cli)
 
     if args_cli.max_iterations is not None:
