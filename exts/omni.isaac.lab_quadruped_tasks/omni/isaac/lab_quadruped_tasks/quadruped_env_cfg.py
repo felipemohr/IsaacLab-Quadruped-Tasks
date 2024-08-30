@@ -47,6 +47,11 @@ class QuadrupedSceneCfg(InteractiveSceneCfg):
 
     # go2 robot
     robot: ArticulationCfg = UNITREE_GO2_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
+    robot.init_state.joint_pos = {
+        ".*hip_joint": 0.0,
+        ".*thigh_joint": math.pi / 4,
+        ".*calf_joint": -math.pi / 2,
+    }
 
     # contact sensors
     contact_forces = ContactSensorCfg(
@@ -101,13 +106,6 @@ class ObservarionsCfg:
 
         # Robot joints measurements
         joint_pos = ObsTerm(func=mdp.joint_pos_rel, noise=GaussianNoise(mean=0.0, std=0.01))
-        joint_vel = ObsTerm(func=mdp.joint_vel_rel, noise=GaussianNoise(mean=0.0, std=0.5))
-
-        # Feet contact booleans
-        feet_contact = ObsTerm(
-            func=mdp.feet_contact_bools,
-            params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*_foot"), "threshold": 5.0},
-        )
 
         # Last action
         last_action = ObsTerm(func=mdp.last_action)
@@ -125,9 +123,13 @@ class EventsCfg:
 
     # startup
     add_base_mass = EventTerm(
-        func=mdp.add_body_mass,
+        func=mdp.randomize_rigid_body_mass,
         mode="startup",
-        params={"asset_cfg": SceneEntityCfg("robot", body_names="base"), "mass_distribution_params": (-1.0, 2.0)},
+        params={
+            "asset_cfg": SceneEntityCfg("robot", body_names="base"),
+            "mass_distribution_params": (-1.0, 2.0),
+            "operation": "add",
+        },
     )
 
     # reset
@@ -175,13 +177,18 @@ class RewardsCfg:
     rew_ang_vel_z = RewTerm(
         func=mdp.track_ang_vel_z_exp, weight=1.5, params={"command_name": "base_velocity", "std": math.sqrt(0.25)}
     )
-    rew_feet_air_time = RewTerm(
-        func=mdp.feet_air_time,
-        weight=0.5,
+
+    pen_joint_deviation = RewTerm(
+        func=mdp.joint_deviation_l1,
+        weight=-0.05,
+        params={"asset_cfg": SceneEntityCfg("robot", joint_names=[".*"])},
+    )
+    pen_feet_slide = RewTerm(
+        func=mdp.feet_slide,
+        weight=-0.1,
         params={
-            "command_name": "base_velocity",
             "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*_foot"),
-            "threshold": 0.5,
+            "asset_cfg": SceneEntityCfg("robot", body_names=".*_foot"),
         },
     )
 
