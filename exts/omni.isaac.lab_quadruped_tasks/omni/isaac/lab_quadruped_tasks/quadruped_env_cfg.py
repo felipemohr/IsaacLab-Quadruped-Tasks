@@ -4,6 +4,7 @@ Copyright (c) 2024, Felipe Mohr Santos
 """
 
 import math
+from dataclasses import MISSING
 
 from omni.isaac.lab_quadruped_tasks import mdp
 
@@ -13,15 +14,17 @@ from omni.isaac.lab.managers import EventTermCfg as EventTerm
 from omni.isaac.lab.managers import ObservationGroupCfg as ObsGroup
 from omni.isaac.lab.managers import ObservationTermCfg as ObsTerm
 from omni.isaac.lab.managers import RewardTermCfg as RewTerm
-from omni.isaac.lab.managers import SceneEntityCfg
 from omni.isaac.lab.managers import TerminationTermCfg as DoneTerm
+from omni.isaac.lab.managers import CurriculumTermCfg as CurrTerm
+from omni.isaac.lab.managers import SceneEntityCfg
 from omni.isaac.lab.scene import InteractiveSceneCfg
 from omni.isaac.lab.sensors import ContactSensorCfg
-from omni.isaac.lab.sim import DomeLightCfg, GroundPlaneCfg
-from omni.isaac.lab.utils import configclass
-from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+from omni.isaac.lab.sim import RigidBodyMaterialCfg, MdlFileCfg, DomeLightCfg
+from omni.isaac.lab.terrains import TerrainImporterCfg
 from omni.isaac.lab.utils.noise import AdditiveGaussianNoiseCfg as GaussianNoise
-from omni.isaac.lab_assets.unitree import UNITREE_GO2_CFG
+from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR, ISAACLAB_NUCLEUS_DIR
+from omni.isaac.lab.utils import configclass
+
 
 ##################
 # Scene Definition
@@ -32,8 +35,27 @@ from omni.isaac.lab_assets.unitree import UNITREE_GO2_CFG
 class QuadrupedSceneCfg(InteractiveSceneCfg):
     """Configuration for the quadruped scene"""
 
-    # ground plane
-    ground = AssetBaseCfg(prim_path="/World/ground", spawn=GroundPlaneCfg(size=(100.0, 100.0)))
+    # terrain
+    terrain = TerrainImporterCfg(
+        prim_path="/World/ground",
+        terrain_type="plane",
+        terrain_generator=None,
+        max_init_terrain_level=1,
+        collision_group=-1,
+        physics_material=RigidBodyMaterialCfg(
+            friction_combine_mode="multiply",
+            restitution_combine_mode="multiply",
+            static_friction=1.0,
+            dynamic_friction=1.0,
+        ),
+        visual_material=MdlFileCfg(
+            mdl_path=f"{ISAACLAB_NUCLEUS_DIR}/Materials/TilesMarbleSpiderWhiteBrickBondHoned/"
+            + "TilesMarbleSpiderWhiteBrickBondHoned.mdl",
+            project_uvw=True,
+            texture_scale=(0.25, 0.25),
+        ),
+        debug_vis=False,
+    )
 
     # distant light
     light = AssetBaseCfg(
@@ -46,12 +68,7 @@ class QuadrupedSceneCfg(InteractiveSceneCfg):
     )
 
     # go2 robot
-    robot: ArticulationCfg = UNITREE_GO2_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
-    robot.init_state.joint_pos = {
-        ".*hip_joint": 0.0,
-        ".*thigh_joint": math.pi / 4,
-        ".*calf_joint": -math.pi / 2,
-    }
+    robot: ArticulationCfg = MISSING
 
     # contact sensors
     contact_forces = ContactSensorCfg(
@@ -216,9 +233,9 @@ class TerminationsCfg:
 
 @configclass
 class CurriculumCfg:
-    """Configuration for the curriculum"""
+    """Curriculum terms for the MDP"""
 
-    pass
+    terrain_levels = CurrTerm(func=mdp.terrain_levels_vel)
 
 
 ########################

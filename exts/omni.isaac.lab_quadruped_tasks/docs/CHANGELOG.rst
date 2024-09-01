@@ -1,6 +1,25 @@
 Changelog
 ---------
 
+2.0.0 (2024-09-01)
+~~~~~~~~~~~~~~~~~~
+
+Added
+^^^^^
+
+* Include ``terrain_levels`` curriculum in `QuadrupedEnvCfg`
+* Create terrain configurations for training Go2 in rough terrains
+* Create `Go2BlindFlatPPORunnerCfg` and `Go2BlindRoughPPORunnerCfg` configurations
+* Create `Go2BlindFlatEnvCfg` and `Go2BlindRoughEnvCfg` environment configurations for training Go2 robot
+* Create `Go2BlindFlatEnvCfg_PLAY` and `Go2BlindRoughEnvCfg_PLAY` environment configurations for playing Go2 robot
+
+Changed
+^^^^^
+
+* Remove robot initialization from `QuadrupedSceneCfg`
+* Use `TerrainImporterCfg` in `QuadrupedSceneCfg` instead of `GroundPlaneCfg`
+* Replace `Isaac-Quadruped-Go2-Flat-v0` with `Isaac-Quadruped-Go2-Blind-Flat-v0`
+
 1.1.0 (2024-08-30)
 ~~~~~~~~~~~~~~~~~~
 
@@ -15,8 +34,8 @@ Changed
 Fixed
 ^^^^^
 
-* Fixed `RSL-RL` training and playing scripts for Isaac Sim 4.1.0 and Isaac Lab 1.1.0
-* Fixed ``randomize_rigid_body_mass`` event for Isaac Sim 4.1.0 and Isaac Lab 1.1.0
+* Fix `RSL-RL` training and playing scripts for Isaac Sim 4.1.0 and Isaac Lab 1.1.0
+* Fix ``randomize_rigid_body_mass`` event for Isaac Sim 4.1.0 and Isaac Lab 1.1.0
 
 
 1.0.0 (2024-07-04)
@@ -25,7 +44,7 @@ Fixed
 Added
 ^^^^^
 
-* Created `RSL-RL` training and playing scripts
-* Created Unitree Go2 `RSL-RL` agent
-* Created `QuadrupedEnvCfg` environment
-* Created `omni.isaac.lab_quadruped_tasks` extension for Isaac Lab
+* Create `RSL-RL` training and playing scripts
+* Create Unitree Go2 `RSL-RL` agent
+* Create `QuadrupedEnvCfg` environment
+* Create `omni.isaac.lab_quadruped_tasks` extension for Isaac Lab

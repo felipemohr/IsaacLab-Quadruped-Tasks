@@ -14,8 +14,8 @@ from omni.isaac.lab_tasks.utils.wrappers.rsl_rl import (
 @configclass
 class QuadrupedGo2PPORunnerCfg(RslRlOnPolicyRunnerCfg):
     num_steps_per_env = 24
-    max_iterations = 2000
-    save_interval = 100
+    max_iterations = 40000
+    save_interval = 1000
     experiment_name = "quadruped_go2"
     empirical_normalization = False
     policy = RslRlPpoActorCriticCfg(
@@ -39,3 +39,19 @@ class QuadrupedGo2PPORunnerCfg(RslRlOnPolicyRunnerCfg):
         desired_kl=0.01,
         max_grad_norm=1.0,
     )
+
+
+@configclass
+class Go2BlindFlatPPORunnerCfg(QuadrupedGo2PPORunnerCfg):
+    def __post_init__(self):
+        super().__post_init__()
+
+        self.experiment_name = "go2_blind_flat"
+
+
+@configclass
+class Go2BlindRoughPPORunnerCfg(QuadrupedGo2PPORunnerCfg):
+    def __post_init__(self):
+        super().__post_init__()
+
+        self.experiment_name = "go2_blind_rough"
