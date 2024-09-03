@@ -102,6 +102,8 @@ class Go2BlindFlatEnvCfg_PLAY(Go2BlindFlatEnvCfg):
         self.observations.policy.enable_corruption = False
         # remove random pushing event
         self.events.push_robot = None
+        # remove random base mass addition event
+        self.events.add_base_mass = None
 
 
 #############################
@@ -141,3 +143,5 @@ class Go2BlindRoughEnvCfg_PLAY(Go2BlindRoughEnvCfg):
         self.observations.policy.enable_corruption = False
         # remove random pushing event
         self.events.push_robot = None
+        # remove random base mass addition event
+        self.events.add_base_mass = None

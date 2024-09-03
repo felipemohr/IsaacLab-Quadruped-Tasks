@@ -16,6 +16,7 @@ Added
 Changed
 ^^^^^
 
+* Update README.md with information for training and playing agents
 * Remove robot initialization from `QuadrupedSceneCfg`
 * Use `TerrainImporterCfg` in `QuadrupedSceneCfg` instead of `GroundPlaneCfg`
 * Replace `Isaac-Quadruped-Go2-Flat-v0` with `Isaac-Quadruped-Go2-Blind-Flat-v0`
