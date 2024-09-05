@@ -93,7 +93,7 @@ class CommandsCfg:
         debug_vis=True,
         resampling_time_range=(10.0, 10.0),
         ranges=mdp.UniformVelocityCommandCfg.Ranges(
-            lin_vel_x=(-1.0, 1.0), lin_vel_y=(-1.0, 1.0), ang_vel_z=(-math.pi / 2, math.pi / 2)
+            lin_vel_x=(-1.5, 1.5), lin_vel_y=(-1.0, 1.0), ang_vel_z=(-math.pi / 2, math.pi / 2)
         ),
     )
 
@@ -180,7 +180,7 @@ class EventsCfg:
         func=mdp.push_by_setting_velocity,
         mode="interval",
         interval_range_s=(10.0, 15.0),
-        params={"velocity_range": {"x": (-0.5, 0.5), "y": (-0.5, 0.5)}},
+        params={"velocity_range": {"x": (-0.5, 0.5), "y": (-0.5, 0.5), "yaw": (-math.pi / 6, math.pi / 6)}},
     )
 
 
@@ -236,6 +236,16 @@ class CurriculumCfg:
     """Curriculum terms for the MDP"""
 
     terrain_levels = CurrTerm(func=mdp.terrain_levels_vel)
+
+    increase_push_vel = CurrTerm(
+        func=mdp.modify_event_parameter,
+        params={
+            "term_name": "push_robot",
+            "param_name": "velocity_range",
+            "value": {"x": (-1.5, 1.5), "y": (-1.5, 1.5), "yaw": (-math.pi / 2, math.pi / 2)},
+            "num_steps": 240000,
+        },
+    )
 
 
 ########################

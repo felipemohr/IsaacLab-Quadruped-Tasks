@@ -1,6 +1,22 @@
 Changelog
 ---------
 
+2.1.0 (2024-09-04)
+~~~~~~~~~~~~~~~~~~
+
+Added
+^^^^^
+
+* Create ``modify_event_parameter`` curriculum and include it in `QuadrupedEnvCfg` to modify ``push_robot`` event 
+* Create ``disable_termination`` curriculum
+
+Changed
+^^^^^
+
+* Increase ``lin_vel_x`` range of ``vel_command`` command in `QuadrupedEnvCfg`
+* Modify viewport camera of `Go2BlindRoughEnvCfg`
+
+
 2.0.0 (2024-09-01)
 ~~~~~~~~~~~~~~~~~~
 

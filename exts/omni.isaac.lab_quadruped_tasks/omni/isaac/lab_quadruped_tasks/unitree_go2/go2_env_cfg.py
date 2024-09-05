@@ -126,6 +126,11 @@ class Go2BlindRoughEnvCfg(QuadrupedEnvCfg):
         self.scene.terrain.terrain_type = "generator"
         self.scene.terrain.terrain_generator = BLIND_ROUGH_TERRAINS_CFG
 
+        # update viewport camera
+        self.viewer.origin_type = "env"
+        self.viewer.eye = (12.0, 0.0, 8.0)
+        self.viewer.lookat = (0.0, 10.0, 0.0)
+
 
 @configclass
 class Go2BlindRoughEnvCfg_PLAY(Go2BlindRoughEnvCfg):
