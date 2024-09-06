@@ -1,5 +1,7 @@
 # Isaac Lab Quadruped Tasks Extension
 
+![image](https://github.com/user-attachments/assets/e2a0a26e-0f06-4eb7-8478-d726585dac94)
+
 [![IsaacSim](https://img.shields.io/badge/IsaacSim-4.1.0-silver.svg)](https://docs.omniverse.nvidia.com/isaacsim/latest/overview.html)
 [![Isaac Lab](https://img.shields.io/badge/IsaacLab-1.1.0-silver)](https://isaac-sim.github.io/IsaacLab)
 [![Python](https://img.shields.io/badge/python-3.10-blue.svg)](https://docs.python.org/3/whatsnew/3.10.html)
@@ -85,3 +87,19 @@ You can also use the pre-trained models present in `models` folder:
 ```bash
 $ python scripts/rsl_rl/play.py --task Isaac-Quadruped-Go2-Blind-Rough-Play-v0 --checkpoint_path models/go2_blind_rough/model_20k.pt
 ```
+
+## Results
+
+Below are some videos recorded during the training process, for each of the tasks.
+
+### Blind locomotion, flat terrain:
+
+https://github.com/user-attachments/assets/21ae573a-2c04-4a7e-ae92-aed17b525ade
+
+### Blind locomotion, rough terrain:
+
+https://github.com/user-attachments/assets/8c5d5d6d-40ab-4345-b046-95352a208968
+
+
+
+
