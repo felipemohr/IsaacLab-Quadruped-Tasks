@@ -12,6 +12,11 @@
 
 This repository contains an extension with tasks for training quadruped robots using Reinforcement Learning in Isaac Lab.
 
+So far, there are 2 tasks that can be used to train Unitree's Go2 robot:
+
+- `Isaac-Quadruped-Go2-Blind-Flat-v0`: blind locomotion, only on flat terrain
+- `Isaac-Quadruped-Go2-Blind-Rough-v0`: blind locomotion, on irregular terrain
+
 ## Installation
 1. Begin by installing NVIDIA's [Isaac Sim](https://docs.omniverse.nvidia.com/isaacsim/latest/installation/install_workstation.html) and [Isaac Lab](https://isaac-sim.github.io/IsaacLab/source/setup/installation/binaries_installation.html).
 2. This repository includes an Isaac Lab extension with the quadruped tasks. To install it, follow these steps:
@@ -35,22 +40,27 @@ The available tasks are `Isaac-Quadruped-Go2-Blind-Flat-v0` and `Isaac-Quadruped
 
 The following arguments are optional, but can be used to specify the training configurations:
 
-- `--num_envs` - Number of environments to simulate
-- `--max_iterations` - Maximum number of iterations to train
-- `--save_interval` - The number of iterations between saves
-- `--seed` - Seed used for the environment
+- `--num_envs` - Number of environments to simulate (default is `1024`)
+- `--max_iterations` - Maximum number of iterations to train (default is `20000`)
+- `--save_interval` - The number of iterations between saves (default is `1000`)
+- `--seed` - Seed used for the environment (default is `42`)
 
-If you want to record video clips during training, you can include the following arguments, along with `--enable_cameras`:
+If you want to enable video clips recording during training, you can include the following arguments, along with `--enable_cameras` and `--video` flags:
 
-- `--video` - enables video recording during training
-- `--video_length` - length of each recorded video (in steps)
-- `--video_interval` - interval between each video recording (in steps)
+- `--video_length` - Length of each recorded video, in steps (default is `200`)
+- `--video_interval` - Interval between each video recording, in steps (default is `20000`)
 
 The entire command would be something like:
 
 ```bash
-$ python scripts/rsl_rl/train.py --task Isaac-Quadruped-Go2-Blind-Flat-v0 --num_envs 1024 --max_iterations 40000 --save_interval 1000 --seed 42 --headless --enable_cameras --video --video_length 240 --video_interval 24000
+$ python scripts/rsl_rl/train.py --task Isaac-Quadruped-Go2-Blind-Flat-v0 --num_envs 1024 --max_iterations 20000 --save_interval 1000 --seed 42 --headless --enable_cameras --video --video_length 200 --video_interval 20000
 ```
+
+To resume the training from a checkpoint, you can set the `--reset` to `True` and specify the run directory and checkpoint.  
+
+- `--resume` - Whether to resume the training (default is `False`)
+- `--load_run` - The run directory to load (default is `".*"`, the latest in alphabetical order matching run will be loaded)
+- `--load_checkpoint` - The checkpoint file to load (default is `"model_.*.pt"`, the latest in alphabetical order matching file will be loaded)
 
 Training logs will be generated in the directory where the training script was executed. Visualize these logs using TensorBoard:
 
@@ -63,10 +73,15 @@ $ python -m tensorboard.main --logdir=$PATH_TO_YOUR_LOGS_DIR$
 Use the `rsl_rl/play.py` script to play the trained agent, specifying the task and the model path:
 
 ```bash
-$ python scripts/rsl_rl/play.py --task Isaac-Quadruped-Go2-Blind-Flat-Play-v0 --num_envs 32 --checkpoint_path logs/rsl_rl/go2_blind_flat/XXXX-XX-XX_XX-XX-XX/model_XXXX.pt
+$ python scripts/rsl_rl/play.py --task Isaac-Quadruped-Go2-Blind-Flat-Play-v0 --num_envs 64 --checkpoint_path logs/rsl_rl/go2_blind_flat/XXXX-XX-XX_XX-XX-XX/model_XXXX.pt
 ```
 
-The `--num_envs` argument is optional and can also be used to define the number of environments to simulate. 
+The `--num_envs` argument is optional and can also be used to define the number of environments to simulate (default is `64`).
 
 Note that the task used ends with `-Play-v0` instead of just `-v0`. This task is exactly the same as the one used for training, but excluding the randomization terms used to make the agent more robust.
 
+You can also use the pre-trained models present in `models` folder:
+
+```bash
+$ python scripts/rsl_rl/play.py --task Isaac-Quadruped-Go2-Blind-Rough-Play-v0 --checkpoint_path models/go2_blind_rough/model_20k.pt
+```

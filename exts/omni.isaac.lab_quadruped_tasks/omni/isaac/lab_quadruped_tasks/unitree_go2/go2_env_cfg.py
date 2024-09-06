@@ -25,6 +25,7 @@ import math
 
 
 BLIND_ROUGH_TERRAINS_CFG = TerrainGeneratorCfg(
+    seed=42,
     size=(8.0, 8.0),
     border_width=20.0,
     num_rows=10,
@@ -34,13 +35,13 @@ BLIND_ROUGH_TERRAINS_CFG = TerrainGeneratorCfg(
     slope_threshold=0.75,
     use_cache=True,
     sub_terrains={
-        "flat": MeshPlaneTerrainCfg(proportion=0.5),
-        "waves": HfWaveTerrainCfg(proportion=0.3, amplitude_range=(0.01, 0.06), num_waves=10, border_width=0.25),
+        "flat": MeshPlaneTerrainCfg(proportion=0.25),
+        "waves": HfWaveTerrainCfg(proportion=0.25, amplitude_range=(0.01, 0.06), num_waves=10, border_width=0.25),
         "boxes": MeshRandomGridTerrainCfg(
-            proportion=0.2, grid_width=0.15, grid_height_range=(0.01, 0.04), platform_width=2.0
+            proportion=0.25, grid_width=0.15, grid_height_range=(0.01, 0.04), platform_width=2.0
         ),
         "random_rough": HfRandomUniformTerrainCfg(
-            proportion=0.05, noise_range=(0.01, 0.06), noise_step=0.01, border_width=0.25
+            proportion=0.25, noise_range=(0.01, 0.06), noise_step=0.01, border_width=0.25
         ),
     },
     curriculum=True,
@@ -48,6 +49,7 @@ BLIND_ROUGH_TERRAINS_CFG = TerrainGeneratorCfg(
 )
 
 BLIND_ROUGH_TERRAINS_PLAY_CFG = TerrainGeneratorCfg(
+    seed=42,
     size=(8.0, 8.0),
     border_width=20.0,
     num_rows=4,
@@ -127,9 +129,7 @@ class Go2BlindRoughEnvCfg(QuadrupedEnvCfg):
         self.scene.terrain.terrain_generator = BLIND_ROUGH_TERRAINS_CFG
 
         # update viewport camera
-        self.viewer.origin_type = "env"
-        self.viewer.eye = (12.0, 0.0, 8.0)
-        self.viewer.lookat = (0.0, 10.0, 0.0)
+        self.viewer.eye = (0.0, 0.0, 75.0)
 
 
 @configclass

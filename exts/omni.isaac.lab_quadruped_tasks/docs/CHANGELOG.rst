@@ -1,20 +1,23 @@
 Changelog
 ---------
 
-2.1.0 (2024-09-04)
+2.1.0 (2024-09-06)
 ~~~~~~~~~~~~~~~~~~
 
 Added
 ^^^^^
 
+* Add pre-trained models for ``go2_blind_flat`` and ``go2_blind_rough`` experiments
 * Create ``modify_event_parameter`` curriculum and include it in `QuadrupedEnvCfg` to modify ``push_robot`` event 
 * Create ``disable_termination`` curriculum
+* Set terrain generator seed in `go2_env_cfg.py`
 
 Changed
 ^^^^^
 
 * Increase ``lin_vel_x`` range of ``vel_command`` command in `QuadrupedEnvCfg`
 * Modify viewport camera of `Go2BlindRoughEnvCfg`
+* Update terrains proportion in `BLIND_ROUGH_TERRAINS_CFG` in `go2_env_cfg.py`
 
 
 2.0.0 (2024-09-01)
