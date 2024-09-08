@@ -1,6 +1,24 @@
 Changelog
 ---------
 
+Incoming (3.0.0)
+~~~~~~~~~~~~~~~~
+
+Added
+^^^^^
+
+* Create `cfg`, `robot` and `agent` folders
+
+Changed
+^^^^^
+
+* Move `unitree_go2` to `robots` folder
+* Move `rsl_rl_cfg.py` to `agent` folder
+* Move `quadruped_env_cfg.py` to `cfg` folder
+* Move `go2_env_cfg.py` to `robots` folder
+* Move `BLIND_ROUGH_TERRAINS_CFG` and `BLIND_ROUGH_TERRAINS_PLAY_CFG` to `quadruped_terrains_cfg.py`
+
+
 2.1.0 (2024-09-06)
 ~~~~~~~~~~~~~~~~~~
 
