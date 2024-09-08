@@ -8,6 +8,7 @@ Added
 ^^^^^
 
 * Create `cfg`, `robot` and `agent` folders
+* Create tasks for Spot robot from Boston Dynamics
 
 Changed
 ^^^^^
