@@ -1,14 +1,15 @@
 Changelog
 ---------
 
-Incoming (3.0.0)
-~~~~~~~~~~~~~~~~
+3.0.0 (2024-09-08)
+~~~~~~~~~~~~~~~~~~
 
 Added
 ^^^^^
 
 * Create `cfg`, `robot` and `agent` folders
 * Create tasks for Spot robot from Boston Dynamics
+* Create tasks for ANYmal D robot from ANYbotics
 
 Changed
 ^^^^^
