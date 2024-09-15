@@ -27,19 +27,14 @@ class AnymalDBlindFlatEnvCfg(QuadrupedEnvCfg):
         super().__post_init__()
 
         self.scene.robot = ANYMAL_D_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
-        self.scene.robot.init_state.joint_pos = {
-            ".*HAA": 0.0,
-            ".*F_HFE": math.pi / 4,
-            ".*H_HFE": -math.pi / 4,
-            ".*F_KFE": -math.pi / 2,
-            ".*H_KFE": math.pi / 2,
-        }
-        
+
         self.rewards.pen_feet_slide.params["sensor_cfg"].body_names = ".*_FOOT"
         self.rewards.pen_feet_slide.params["asset_cfg"].body_names = ".*_FOOT"
 
         self.events.add_base_mass.params["mass_distribution_params"] = (-3.5, 7.5)
 
+        self.rewards.pen_joint_powers.weight = -1e-4
+        self.rewards.pen_joint_deviation.weight = -0.1
 
         self.curriculum.terrain_levels = None
 
@@ -70,18 +65,15 @@ class AnymalDBlindRoughEnvCfg(QuadrupedEnvCfg):
     def __post_init__(self):
         super().__post_init__()
 
-        self.scene.robot.init_state.joint_pos = {
-            ".*HAA": 0.0,
-            ".*F_HFE": math.pi / 4,
-            ".*H_HFE": -math.pi / 4,
-            ".*F_KFE": -math.pi / 2,
-            ".*H_KFE": math.pi / 2,
-        }
+        self.scene.robot = ANYMAL_D_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
 
         self.rewards.pen_feet_slide.params["sensor_cfg"].body_names = ".*_FOOT"
         self.rewards.pen_feet_slide.params["asset_cfg"].body_names = ".*_FOOT"
-        
+
         self.events.add_base_mass.params["mass_distribution_params"] = (-3.5, 7.5)
+
+        self.rewards.pen_joint_powers.weight = -1e-4
+        self.rewards.pen_joint_deviation.weight = -0.1
 
         self.scene.terrain.terrain_type = "generator"
         self.scene.terrain.terrain_generator = BLIND_ROUGH_TERRAINS_CFG

@@ -30,7 +30,7 @@ algorithm:
   desired_kl: 0.01
   max_grad_norm: 1.0
 save_interval: 500
-experiment_name: go2_blind_flat
+experiment_name: anymal_d_blind_flat
 run_name: ''
 logger: tensorboard
 neptune_project: isaaclab

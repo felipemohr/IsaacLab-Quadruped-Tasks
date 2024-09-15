@@ -1,7 +1,7 @@
 seed: 42
 device: cuda:0
 num_steps_per_env: 24
-max_iterations: 20000
+max_iterations: 8000
 empirical_normalization: false
 policy:
   class_name: ActorCritic
@@ -29,7 +29,7 @@ algorithm:
   lam: 0.95
   desired_kl: 0.01
   max_grad_norm: 1.0
-save_interval: 1000
+save_interval: 500
 experiment_name: go2_blind_rough
 run_name: ''
 logger: tensorboard

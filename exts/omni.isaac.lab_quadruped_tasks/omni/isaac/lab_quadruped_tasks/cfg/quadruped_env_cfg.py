@@ -57,7 +57,7 @@ class QuadrupedSceneCfg(InteractiveSceneCfg):
         debug_vis=False,
     )
 
-    # distant light
+    # sky light
     light = AssetBaseCfg(
         prim_path="/World/skyLight",
         spawn=DomeLightCfg(
@@ -67,7 +67,7 @@ class QuadrupedSceneCfg(InteractiveSceneCfg):
         ),
     )
 
-    # go2 robot
+    # quadruped robot
     robot: ArticulationCfg = MISSING
 
     # contact sensors
@@ -113,18 +113,18 @@ class ObservarionsCfg:
     class PolicyCfg(ObsGroup):
         """Observation for policy group"""
 
-        # Velocity command
+        # velocity command
         vel_command = ObsTerm(func=mdp.generated_commands, params={"command_name": "base_velocity"})
 
-        # Robot base measurements
+        # robot base measurements
         base_lin_vel = ObsTerm(func=mdp.base_lin_vel, noise=GaussianNoise(mean=0.0, std=0.05))
         base_ang_vel = ObsTerm(func=mdp.base_ang_vel, noise=GaussianNoise(mean=0.0, std=0.05))
         proj_gravity = ObsTerm(func=mdp.projected_gravity, noise=GaussianNoise(mean=0.0, std=0.025))
 
-        # Robot joints measurements
+        # robot joint measurements
         joint_pos = ObsTerm(func=mdp.joint_pos_rel, noise=GaussianNoise(mean=0.0, std=0.01))
 
-        # Last action
+        # last action
         last_action = ObsTerm(func=mdp.last_action)
 
         def __post_init__(self):
@@ -188,6 +188,7 @@ class EventsCfg:
 class RewardsCfg:
     """Reward terms for the MDP"""
 
+    # rewards
     rew_lin_vel_xy = RewTerm(
         func=mdp.track_lin_vel_xy_exp, weight=2.0, params={"command_name": "base_velocity", "std": math.sqrt(0.25)}
     )
@@ -195,6 +196,7 @@ class RewardsCfg:
         func=mdp.track_ang_vel_z_exp, weight=1.5, params={"command_name": "base_velocity", "std": math.sqrt(0.25)}
     )
 
+    # penalizations
     pen_joint_deviation = RewTerm(
         func=mdp.joint_deviation_l1,
         weight=-0.05,
@@ -208,12 +210,11 @@ class RewardsCfg:
             "asset_cfg": SceneEntityCfg("robot", body_names=".*_foot"),
         },
     )
-
     pen_lin_vel_z = RewTerm(func=mdp.lin_vel_z_l2, weight=-1.0)
     pen_ang_vel_xy = RewTerm(func=mdp.ang_vel_xy_l2, weight=-0.05)
     pen_action_rate = RewTerm(func=mdp.action_rate_l2, weight=-0.01)
     pen_joint_accel = RewTerm(func=mdp.joint_acc_l2, weight=-1.0e-6)
-    pen_joint_powers = RewTerm(func=mdp.joint_powers_l1, weight=-3e-3)
+    pen_joint_powers = RewTerm(func=mdp.joint_powers_l1, weight=-5e-4)
 
 
 @configclass
@@ -225,10 +226,6 @@ class TerminationsCfg:
         func=mdp.illegal_contact,
         params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names="base"), "threshold": 1.0},
     )
-    bad_orientation = DoneTerm(
-        func=mdp.bad_orientation,
-        params={"asset_cfg": SceneEntityCfg("robot", body_names="base"), "limit_angle": math.pi / 2},
-    )
 
 
 @configclass
@@ -236,16 +233,6 @@ class CurriculumCfg:
     """Curriculum terms for the MDP"""
 
     terrain_levels = CurrTerm(func=mdp.terrain_levels_vel)
-
-    increase_push_vel = CurrTerm(
-        func=mdp.modify_event_parameter,
-        params={
-            "term_name": "push_robot",
-            "param_name": "velocity_range",
-            "value": {"x": (-1.5, 1.5), "y": (-1.5, 1.5), "yaw": (-math.pi / 2, math.pi / 2)},
-            "num_steps": 240000,
-        },
-    )
 
 
 ########################

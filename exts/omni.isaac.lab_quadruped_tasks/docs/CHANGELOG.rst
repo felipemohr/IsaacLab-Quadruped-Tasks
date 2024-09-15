@@ -1,6 +1,26 @@
 Changelog
 ---------
 
+3.1.0 (2024-09-14)
+~~~~~~~~~~~~~~~~~~
+
+Added
+^^^^^
+
+* Add pre-trained models for ``anymal_d_blind_flat`` and ``anymal_d_blind_rough`` experiments
+* Add pre-trained models for ``spot_blind_flat`` and ``spot_blind_rough`` experiments
+
+Changed
+^^^^^
+
+* Update pre-trained models for ``go2_blind_flat`` and ``go2_blind_rough`` experiments
+* Update ``pen_joint_powers`` weight for `QuadrupedEnvCfg`
+* Update ``pen_joint_powers`` weight for `Spot` environments
+* Update ``pen_joint_powers`` and ``pen_joint_deviation`` weight fors `ANYmalD` environments
+* Remove ``increase_push_vel`` curriculum from `QuadrupedEnvCfg`
+* Remove ``bad_orientation`` termination from `QuadrupedEnvCfg`
+
+
 3.0.0 (2024-09-08)
 ~~~~~~~~~~~~~~~~~~
 

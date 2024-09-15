@@ -14,8 +14,8 @@ from omni.isaac.lab_tasks.utils.wrappers.rsl_rl import (
 @configclass
 class QuadrupedPPORunnerCfg(RslRlOnPolicyRunnerCfg):
     num_steps_per_env = 24
-    max_iterations = 20000
-    save_interval = 1000
+    max_iterations = 8000
+    save_interval = 500
     experiment_name = "quadruped"
     empirical_normalization = False
     policy = RslRlPpoActorCriticCfg(

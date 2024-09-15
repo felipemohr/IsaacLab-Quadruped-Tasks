@@ -41,24 +41,24 @@ Use the `rsl_rl/train.py` script to train the robot, specifying the task:
 $ python scripts/rsl_rl/train.py --task Isaac-Quadruped-Go2-Blind-Flat-v0 --headless
 ```
 
-The available tasks are `Isaac-Quadruped-Go2-Blind-Flat-v0` and `Isaac-Quadruped-Go2-Blind-Rough-v0`, and the `--headless` flag is used to disable the viewport, to speed up the training significantly.
+The available tasks are listed in the **Overview** table, and the `--headless` flag is used to disable the viewport, to speed up the training significantly.
 
 The following arguments are optional, but can be used to specify the training configurations:
 
 - `--num_envs` - Number of environments to simulate (default is `1024`)
-- `--max_iterations` - Maximum number of iterations to train (default is `20000`)
-- `--save_interval` - The number of iterations between saves (default is `1000`)
+- `--max_iterations` - Maximum number of iterations to train (default is `8000`)
+- `--save_interval` - The number of iterations between saves (default is `500`)
 - `--seed` - Seed used for the environment (default is `42`)
 
 If you want to enable video clips recording during training, you can include the following arguments, along with `--enable_cameras` and `--video` flags:
 
-- `--video_length` - Length of each recorded video, in steps (default is `200`)
-- `--video_interval` - Interval between each video recording, in steps (default is `20000`)
+- `--video_length` - Length of each recorded video, in steps (default is `400`)
+- `--video_interval` - Interval between each video recording, in steps (default is `24000`)
 
 The entire command would be something like:
 
 ```bash
-$ python scripts/rsl_rl/train.py --task Isaac-Quadruped-Go2-Blind-Flat-v0 --num_envs 1024 --max_iterations 20000 --save_interval 1000 --seed 42 --headless --enable_cameras --video --video_length 200 --video_interval 20000
+$ python scripts/rsl_rl/train.py --task Isaac-Quadruped-Go2-Blind-Flat-v0 --num_envs 1024 --max_iterations 8000 --save_interval 500 --seed 42 --headless --enable_cameras --video --video_length 400 --video_interval 24000
 ```
 
 To resume the training from a checkpoint, you can set the `--reset` to `True` and specify the run directory and checkpoint.  
@@ -88,7 +88,7 @@ Note that the task used ends with `-Play-v0` instead of just `-v0`. This task is
 You can also use the pre-trained models present in `models` folder:
 
 ```bash
-$ python scripts/rsl_rl/play.py --task Isaac-Quadruped-Go2-Blind-Rough-Play-v0 --checkpoint_path models/go2_blind_rough/model_20k.pt
+$ python scripts/rsl_rl/play.py --task Isaac-Quadruped-Go2-Blind-Rough-Play-v0 --checkpoint_path models/go2_blind_rough/model_8k.pt
 ```
 
 ## Results
@@ -102,7 +102,4 @@ https://github.com/user-attachments/assets/21ae573a-2c04-4a7e-ae92-aed17b525ade
 ### Blind locomotion, rough terrain:
 
 https://github.com/user-attachments/assets/8c5d5d6d-40ab-4345-b046-95352a208968
-
-
-
 

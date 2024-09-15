@@ -27,16 +27,12 @@ class SpotBlindFlatEnvCfg(QuadrupedEnvCfg):
         super().__post_init__()
 
         self.scene.robot = SPOT_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
-        self.scene.robot.init_state.joint_pos = {
-            ".*_hx": 0.0,
-            ".*_hy": math.pi / 4,
-            ".*_kn": -math.pi / 2,
-        }
 
         self.events.add_base_mass.params["mass_distribution_params"] = (-2.5, 5.0)
         self.events.add_base_mass.params["asset_cfg"].body_names = "body"
         self.terminations.base_contact.params["sensor_cfg"].body_names = "body"
-        self.terminations.bad_orientation.params["asset_cfg"].body_names = "body"
+
+        self.rewards.pen_joint_powers.weight = -3e-4
 
         self.curriculum.terrain_levels = None
 
@@ -68,16 +64,12 @@ class SpotBlindRoughEnvCfg(QuadrupedEnvCfg):
         super().__post_init__()
 
         self.scene.robot = SPOT_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
-        self.scene.robot.init_state.joint_pos = {
-            ".*_hx": 0.0,
-            ".*_hy": math.pi / 4,
-            ".*_kn": -math.pi / 2,
-        }
 
         self.events.add_base_mass.params["mass_distribution_params"] = (-2.5, 5.0)
         self.events.add_base_mass.params["asset_cfg"].body_names = "body"
         self.terminations.base_contact.params["sensor_cfg"].body_names = "body"
-        self.terminations.bad_orientation.params["asset_cfg"].body_names = "body"
+
+        self.rewards.pen_joint_powers.weight = -3e-4
 
         self.scene.terrain.terrain_type = "generator"
         self.scene.terrain.terrain_generator = BLIND_ROUGH_TERRAINS_CFG
