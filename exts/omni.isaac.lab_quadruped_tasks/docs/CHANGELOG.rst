@@ -1,6 +1,26 @@
 Changelog
 ---------
 
+3.2.0 (2024-09-26)
+~~~~~~~~~~~~~~~~~~
+
+Added
+^^^^^
+
+* Create `BLIND_HARD_ROUGH_TERRAINS_CFG` and `BLIND_HARD_ROUGH_TERRAINS_PLAY_CFG` terrain configurations
+* Create ``pen_undesired_contacts`` penalization term for `QuadrupedEnvCfg`
+
+Changed
+^^^^^
+
+* Update for Isaac Sim 4.2.0 and Isaac Lab 1.2.0
+* Change ``scale`` of ``joint_pos`` action to 0.2
+* Use new `BLIND_HARD_ROUGH_TERRAINS_CFG` in AnymalD and Spot tasks
+* Update pre-trained models for ``go2_blind_flat`` and ``go2_blind_rough`` experiments
+* Update pre-trained models for ``spot_blind_flat`` and ``spot_blind_rough`` experiments
+* Update pre-trained models for ``anymal_d_blind_flat`` and ``anymal_d_blind_rough`` experiments
+
+
 3.1.0 (2024-09-14)
 ~~~~~~~~~~~~~~~~~~
 
