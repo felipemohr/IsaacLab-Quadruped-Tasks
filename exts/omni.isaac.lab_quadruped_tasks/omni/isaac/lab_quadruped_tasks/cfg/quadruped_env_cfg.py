@@ -102,7 +102,7 @@ class CommandsCfg:
 class ActionsCfg:
     """Action specifications for the MDP"""
 
-    joint_pos = mdp.JointPositionActionCfg(asset_name="robot", joint_names=[".*"], scale=0.5, use_default_offset=True)
+    joint_pos = mdp.JointPositionActionCfg(asset_name="robot", joint_names=[".*"], scale=0.2, use_default_offset=True)
 
 
 @configclass
@@ -210,6 +210,11 @@ class RewardsCfg:
             "asset_cfg": SceneEntityCfg("robot", body_names=".*_foot"),
         },
     )
+    pen_undesired_contacts = RewTerm(
+        func=mdp.undesired_contacts,
+        weight=-1.0,
+        params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*THIGH"), "threshold": 1.0},
+    )
     pen_lin_vel_z = RewTerm(func=mdp.lin_vel_z_l2, weight=-1.0)
     pen_ang_vel_xy = RewTerm(func=mdp.ang_vel_xy_l2, weight=-0.05)
     pen_action_rate = RewTerm(func=mdp.action_rate_l2, weight=-0.01)
@@ -258,8 +263,9 @@ class QuadrupedEnvCfg(ManagerBasedRLEnvCfg):
 
     def __post_init__(self):
         """Post initialization"""
-        self.decimation = 4
+        self.decimation = 8
         self.episode_length_s = 20.0
-        self.sim.render_interval = self.decimation
+        self.sim.render_interval = 2 * self.decimation
         # simulation settings
-        self.sim.dt = 1 / 200.0
+        self.sim.dt = 1 / 400.0
+        self.seed = 42

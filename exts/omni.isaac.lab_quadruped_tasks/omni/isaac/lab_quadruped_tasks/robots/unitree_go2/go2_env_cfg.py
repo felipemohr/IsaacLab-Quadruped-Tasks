@@ -33,6 +33,8 @@ class Go2BlindFlatEnvCfg(QuadrupedEnvCfg):
             ".*calf_joint": -math.pi / 2,
         }
 
+        self.rewards.pen_undesired_contacts = None
+
         self.curriculum.terrain_levels = None
 
 
@@ -68,6 +70,8 @@ class Go2BlindRoughEnvCfg(QuadrupedEnvCfg):
             ".*thigh_joint": math.pi / 4,
             ".*calf_joint": -math.pi / 2,
         }
+
+        self.rewards.pen_undesired_contacts = None
 
         self.scene.terrain.terrain_type = "generator"
         self.scene.terrain.terrain_generator = BLIND_ROUGH_TERRAINS_CFG

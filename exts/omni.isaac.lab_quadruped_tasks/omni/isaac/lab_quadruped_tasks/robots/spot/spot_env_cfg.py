@@ -7,13 +7,11 @@ from omni.isaac.lab.utils import configclass
 
 from omni.isaac.lab_quadruped_tasks.cfg.quadruped_env_cfg import QuadrupedEnvCfg
 from omni.isaac.lab_quadruped_tasks.cfg.quadruped_terrains_cfg import (
-    BLIND_ROUGH_TERRAINS_CFG,
-    BLIND_ROUGH_TERRAINS_PLAY_CFG,
+    BLIND_HARD_ROUGH_TERRAINS_CFG,
+    BLIND_HARD_ROUGH_TERRAINS_PLAY_CFG,
 )
 
 from omni.isaac.lab_assets.spot import SPOT_CFG
-
-import math
 
 
 #############################
@@ -28,11 +26,13 @@ class SpotBlindFlatEnvCfg(QuadrupedEnvCfg):
 
         self.scene.robot = SPOT_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
 
-        self.events.add_base_mass.params["mass_distribution_params"] = (-2.5, 5.0)
         self.events.add_base_mass.params["asset_cfg"].body_names = "body"
+        self.events.add_base_mass.params["mass_distribution_params"] = (-2.5, 5.0)
+
         self.terminations.base_contact.params["sensor_cfg"].body_names = "body"
 
         self.rewards.pen_joint_powers.weight = -3e-4
+        self.rewards.pen_undesired_contacts = None
 
         self.curriculum.terrain_levels = None
 
@@ -65,14 +65,16 @@ class SpotBlindRoughEnvCfg(QuadrupedEnvCfg):
 
         self.scene.robot = SPOT_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
 
-        self.events.add_base_mass.params["mass_distribution_params"] = (-2.5, 5.0)
         self.events.add_base_mass.params["asset_cfg"].body_names = "body"
+        self.events.add_base_mass.params["mass_distribution_params"] = (-2.5, 5.0)
+
         self.terminations.base_contact.params["sensor_cfg"].body_names = "body"
 
         self.rewards.pen_joint_powers.weight = -3e-4
+        self.rewards.pen_undesired_contacts = None
 
         self.scene.terrain.terrain_type = "generator"
-        self.scene.terrain.terrain_generator = BLIND_ROUGH_TERRAINS_CFG
+        self.scene.terrain.terrain_generator = BLIND_HARD_ROUGH_TERRAINS_CFG
 
         # update viewport camera
         self.viewer.eye = (0.0, 0.0, 75.0)
@@ -88,7 +90,7 @@ class SpotBlindRoughEnvCfg_PLAY(SpotBlindRoughEnvCfg):
 
         # spawn the robot randomly in the grid (instead of their terrain levels)
         self.scene.terrain.max_init_terrain_level = None
-        self.scene.terrain.terrain_generator = BLIND_ROUGH_TERRAINS_PLAY_CFG
+        self.scene.terrain.terrain_generator = BLIND_HARD_ROUGH_TERRAINS_PLAY_CFG
 
         # disable randomization for play
         self.observations.policy.enable_corruption = False

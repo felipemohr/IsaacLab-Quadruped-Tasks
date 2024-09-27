@@ -7,13 +7,11 @@ from omni.isaac.lab.utils import configclass
 
 from omni.isaac.lab_quadruped_tasks.cfg.quadruped_env_cfg import QuadrupedEnvCfg
 from omni.isaac.lab_quadruped_tasks.cfg.quadruped_terrains_cfg import (
-    BLIND_ROUGH_TERRAINS_CFG,
-    BLIND_ROUGH_TERRAINS_PLAY_CFG,
+    BLIND_HARD_ROUGH_TERRAINS_CFG,
+    BLIND_HARD_ROUGH_TERRAINS_PLAY_CFG,
 )
 
 from omni.isaac.lab_assets.anymal import ANYMAL_D_CFG
-
-import math
 
 
 ###############################
@@ -76,7 +74,7 @@ class AnymalDBlindRoughEnvCfg(QuadrupedEnvCfg):
         self.rewards.pen_joint_deviation.weight = -0.1
 
         self.scene.terrain.terrain_type = "generator"
-        self.scene.terrain.terrain_generator = BLIND_ROUGH_TERRAINS_CFG
+        self.scene.terrain.terrain_generator = BLIND_HARD_ROUGH_TERRAINS_CFG
 
         # update viewport camera
         self.viewer.eye = (0.0, 0.0, 75.0)
@@ -92,7 +90,7 @@ class AnymalDBlindRoughEnvCfg_PLAY(AnymalDBlindRoughEnvCfg):
 
         # spawn the robot randomly in the grid (instead of their terrain levels)
         self.scene.terrain.max_init_terrain_level = None
-        self.scene.terrain.terrain_generator = BLIND_ROUGH_TERRAINS_PLAY_CFG
+        self.scene.terrain.terrain_generator = BLIND_HARD_ROUGH_TERRAINS_PLAY_CFG
 
         # disable randomization for play
         self.observations.policy.enable_corruption = False
