@@ -61,7 +61,7 @@ The entire command would be something like:
 $ python scripts/rsl_rl/train.py --task Isaac-Quadruped-Go2-Blind-Flat-v0 --num_envs 1024 --max_iterations 8000 --save_interval 500 --seed 42 --headless --enable_cameras --video --video_length 400 --video_interval 24000
 ```
 
-To resume the training from a checkpoint, you can set the `--reset` to `True` and specify the run directory and checkpoint.  
+To resume the training from a checkpoint, you can set the `--resume` to `True` and specify the run directory and checkpoint.  
 
 - `--resume` - Whether to resume the training (default is `False`)
 - `--load_run` - The run directory to load (default is `".*"`, the latest in alphabetical order matching run will be loaded)

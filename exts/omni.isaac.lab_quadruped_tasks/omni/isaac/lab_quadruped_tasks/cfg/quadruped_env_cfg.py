@@ -220,6 +220,7 @@ class RewardsCfg:
     pen_action_rate = RewTerm(func=mdp.action_rate_l2, weight=-0.01)
     pen_joint_accel = RewTerm(func=mdp.joint_acc_l2, weight=-1.0e-6)
     pen_joint_powers = RewTerm(func=mdp.joint_powers_l1, weight=-5e-4)
+    pen_flat_orientation = RewTerm(func=mdp.flat_orientation_l2, weight=-2.5)
 
 
 @configclass

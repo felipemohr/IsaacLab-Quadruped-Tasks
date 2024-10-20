@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+3.3.0 (2024-10-20)
+~~~~~~~~~~~~~~~~~~
+
+Added
+^^^^^
+
+* Create `STAIRS_TERRAINS_CFG` and `STAIRS_TERRAINS_PLAY_CFG` terrain configurations
+* Create ``pen_flat_orientation`` penalization term for `QuadrupedEnvCfg`
+
+
 3.2.0 (2024-09-26)
 ~~~~~~~~~~~~~~~~~~
 
