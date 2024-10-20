@@ -9,6 +9,13 @@ Added
 
 * Create `STAIRS_TERRAINS_CFG` and `STAIRS_TERRAINS_PLAY_CFG` terrain configurations
 * Create ``pen_flat_orientation`` penalization term for `QuadrupedEnvCfg`
+* Create `Go2BlindStairsEnvCfg`, `AnymalDBlindStairsEnvCfg` and `SpotBlindStairsEnvCfg` environment configurations
+* Create tasks for Stairs terrains for Go2, AnymalD and Spot robots.
+
+Changed
+^^^^^
+
+* Create `Go2BaseEnvCfg`, `AnymalDBaseEnvCfg` and `SpotBaseEnvCfg` environment base classes
 
 
 3.2.0 (2024-09-26)

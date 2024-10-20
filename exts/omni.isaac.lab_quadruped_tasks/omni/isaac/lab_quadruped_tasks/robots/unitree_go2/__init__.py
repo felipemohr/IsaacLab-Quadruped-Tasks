@@ -19,6 +19,8 @@ go2_blind_flat_runner_cfg.experiment_name = "go2_blind_flat"
 go2_blind_rough_runner_cfg = QuadrupedPPORunnerCfg()
 go2_blind_rough_runner_cfg.experiment_name = "go2_blind_rough"
 
+go2_blind_stairs_runner_cfg = QuadrupedPPORunnerCfg()
+go2_blind_stairs_runner_cfg.experiment_name = "go2_blind_stairs"
 
 ##
 # Register Gym environments
@@ -69,5 +71,29 @@ gym.register(
     kwargs={
         "env_cfg_entry_point": go2_env_cfg.Go2BlindRoughEnvCfg_PLAY,
         "rsl_rl_cfg_entry_point": go2_blind_rough_runner_cfg,
+    },
+)
+
+##############################
+# Go2 Blind Stairs Environment
+##############################
+
+gym.register(
+    id="Isaac-Quadruped-Go2-Blind-Stairs-v0",
+    entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
+    disable_env_checker=True,
+    kwargs={
+        "env_cfg_entry_point": go2_env_cfg.Go2BlindStairsEnvCfg,
+        "rsl_rl_cfg_entry_point": go2_blind_stairs_runner_cfg,
+    },
+)
+
+gym.register(
+    id="Isaac-Quadruped-Go2-Blind-Stairs-Play-v0",
+    entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
+    disable_env_checker=True,
+    kwargs={
+        "env_cfg_entry_point": go2_env_cfg.Go2BlindStairsEnvCfg_PLAY,
+        "rsl_rl_cfg_entry_point": go2_blind_stairs_runner_cfg,
     },
 )
