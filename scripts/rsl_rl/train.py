@@ -19,6 +19,8 @@ parser.add_argument("--max_iterations", type=int, default=None, help="Maximum nu
 parser.add_argument("--save_interval", type=int, default=None, help="The number of iterations between saves")
 parser.add_argument("--task", type=str, default=None, help="Name of the task.")
 parser.add_argument("--seed", type=int, default=None, help="Seed used for the environment")
+parser.add_argument("--checkpoint_path", type=str, default=None, help="Relative path to checkpoint file.")
+
 # append RSL-RL cli arguments
 cli_args.add_rsl_rl_args(parser)
 # append AppLauncher cli args
@@ -99,7 +101,10 @@ def main():
     # save resume path before creating a new log_dir
     if agent_cfg.resume:
         # get path to previous checkpoint
-        resume_path = get_checkpoint_path(log_root_path, agent_cfg.load_run, agent_cfg.load_checkpoint)
+        if args_cli.checkpoint_path is not None:
+            resume_path = args_cli.checkpoint_path
+        else:
+            resume_path = get_checkpoint_path(log_root_path, agent_cfg.load_run, agent_cfg.load_checkpoint)
         print(f"[INFO]: Loading model checkpoint from: {resume_path}")
         # load previously trained model
         runner.load(resume_path)

@@ -10,7 +10,9 @@ Added
 * Create `STAIRS_TERRAINS_CFG` and `STAIRS_TERRAINS_PLAY_CFG` terrain configurations
 * Create ``pen_flat_orientation`` penalization term for `QuadrupedEnvCfg`
 * Create `Go2BlindStairsEnvCfg`, `AnymalDBlindStairsEnvCfg` and `SpotBlindStairsEnvCfg` environment configurations
-* Create tasks for Stairs terrains for Go2, AnymalD and Spot robots.
+* Create tasks for Stairs terrains for Go2, AnymalD and Spot robots
+* Add pre-trained models for ``go2_blind_stairs``, ``anymal_d_blind_stairs`` and ``spot_blind_stairs`` experiments
+* Add ``--checkpoint_path`` argument to rsl_rl train script
 
 Changed
 ^^^^^

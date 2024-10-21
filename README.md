@@ -67,6 +67,12 @@ To resume the training from a checkpoint, you can set the `--resume` to `True` a
 - `--load_run` - The run directory to load (default is `".*"`, the latest in alphabetical order matching run will be loaded)
 - `--load_checkpoint` - The checkpoint file to load (default is `"model_.*.pt"`, the latest in alphabetical order matching file will be loaded)
 
+Alternativelly, you can directly set the relative path to the checkpoint file with the `--checkpoint_path` argument:
+
+```bash
+$ python scripts/rsl_rl/train.py --task Isaac-Quadruped-Go2-Blind-Stairs-v0 --num_envs 1024 --max_iterations 4000 --resume True --checkpoint_path models/go2_blind_rough/model_8k.pt
+```
+
 Training logs will be generated in the directory where the training script was executed. Visualize these logs using TensorBoard:
 
 ```bash
