@@ -14,13 +14,13 @@
 
 This repository contains an extension with tasks for training quadruped robots using Reinforcement Learning in Isaac Lab.
 
-So far, there are two types of tasks that can be used to train three different quadruped robots:
+So far, there are three types of tasks that can be used to train three different quadruped robots:
 
-|                            | Flat terrain                            | Rough terrain                            |
-| -------------------------- | --------------------------------------- | ---------------------------------------- |
-| **ANYmal D (ANYbotics)**   | `Isaac-Quadruped-AnymalD-Blind-Flat-v0` | `Isaac-Quadruped-AnymalD-Blind-Rough-v0` |
-| **Go2 (Unitree)**          | `Isaac-Quadruped-Go2-Blind-Flat-v0`     | `Isaac-Quadruped-Go2-Blind-Rough-v0`     |
-| **Spot (Boston Dynamics)** | `Isaac-Quadruped-Spot-Blind-Flat-v0`    | `Isaac-Quadruped-Spot-Blind-Rough-v0`    |
+|                            | Flat terrain                            | Rough terrain                            | Stairs terrain                            |
+| -------------------------- | --------------------------------------- | ---------------------------------------- | ----------------------------------------- |
+| **ANYmal D (ANYbotics)**   | `Isaac-Quadruped-AnymalD-Blind-Flat-v0` | `Isaac-Quadruped-AnymalD-Blind-Rough-v0` | `Isaac-Quadruped-AnymalD-Blind-Stairs-v0` |
+| **Go2 (Unitree)**          | `Isaac-Quadruped-Go2-Blind-Flat-v0`     | `Isaac-Quadruped-Go2-Blind-Rough-v0`     | `Isaac-Quadruped-Go2-Blind-Stairs-v0`     |
+| **Spot (Boston Dynamics)** | `Isaac-Quadruped-Spot-Blind-Flat-v0`    | `Isaac-Quadruped-Spot-Blind-Rough-v0`    | `Isaac-Quadruped-Spot-Blind-Stairs-v0`    |
 
 ## Installation
 1. Begin by installing NVIDIA's [Isaac Sim](https://docs.omniverse.nvidia.com/isaacsim/latest/installation/install_workstation.html) and [Isaac Lab](https://isaac-sim.github.io/IsaacLab/source/setup/installation/binaries_installation.html).
