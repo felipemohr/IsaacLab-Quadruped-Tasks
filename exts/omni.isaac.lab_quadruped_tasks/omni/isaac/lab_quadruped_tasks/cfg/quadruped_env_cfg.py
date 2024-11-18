@@ -190,10 +190,19 @@ class RewardsCfg:
 
     # rewards
     rew_lin_vel_xy = RewTerm(
-        func=mdp.track_lin_vel_xy_exp, weight=2.0, params={"command_name": "base_velocity", "std": math.sqrt(0.25)}
+        func=mdp.track_lin_vel_xy_exp, weight=1.0, params={"command_name": "base_velocity", "std": math.sqrt(0.25)}
     )
     rew_ang_vel_z = RewTerm(
-        func=mdp.track_ang_vel_z_exp, weight=1.5, params={"command_name": "base_velocity", "std": math.sqrt(0.25)}
+        func=mdp.track_ang_vel_z_exp, weight=0.5, params={"command_name": "base_velocity", "std": math.sqrt(0.25)}
+    )
+    rew_feet_air_time = RewTerm(
+        func=mdp.feet_air_time,
+        weight=0.25,
+        params={
+            "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*_foot"),
+            "command_name": "base_velocity",
+            "threshold": 0.5,
+        },
     )
 
     # penalizations
@@ -202,25 +211,17 @@ class RewardsCfg:
         weight=-0.05,
         params={"asset_cfg": SceneEntityCfg("robot", joint_names=[".*"])},
     )
-    pen_feet_slide = RewTerm(
-        func=mdp.feet_slide,
-        weight=-0.1,
-        params={
-            "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*_foot"),
-            "asset_cfg": SceneEntityCfg("robot", body_names=".*_foot"),
-        },
-    )
     pen_undesired_contacts = RewTerm(
         func=mdp.undesired_contacts,
         weight=-1.0,
-        params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*THIGH"), "threshold": 1.0},
+        params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*_thigh"), "threshold": 1.0},
     )
-    pen_lin_vel_z = RewTerm(func=mdp.lin_vel_z_l2, weight=-1.0)
+    pen_lin_vel_z = RewTerm(func=mdp.lin_vel_z_l2, weight=-2.0)
     pen_ang_vel_xy = RewTerm(func=mdp.ang_vel_xy_l2, weight=-0.05)
     pen_action_rate = RewTerm(func=mdp.action_rate_l2, weight=-0.01)
-    pen_joint_accel = RewTerm(func=mdp.joint_acc_l2, weight=-1.0e-6)
-    pen_joint_powers = RewTerm(func=mdp.joint_powers_l1, weight=-5e-4)
-    pen_flat_orientation = RewTerm(func=mdp.flat_orientation_l2, weight=-2.5)
+    pen_joint_accel = RewTerm(func=mdp.joint_acc_l2, weight=-2.5e-7)
+    pen_joint_powers = RewTerm(func=mdp.joint_powers_l1, weight=-1e-4)
+    pen_flat_orientation = RewTerm(func=mdp.flat_orientation_l2, weight=-1.0)
 
 
 @configclass
@@ -264,9 +265,9 @@ class QuadrupedEnvCfg(ManagerBasedRLEnvCfg):
 
     def __post_init__(self):
         """Post initialization"""
-        self.decimation = 8
+        self.decimation = 4
         self.episode_length_s = 20.0
         self.sim.render_interval = 2 * self.decimation
         # simulation settings
-        self.sim.dt = 1 / 400.0
+        self.sim.dt = 1 / 200.0
         self.seed = 42

@@ -1,6 +1,26 @@
 Changelog
 ---------
 
+4.0.0 (Unreleased)
+~~~~~~~~~~~~~~~~~~
+
+Added
+^^^^^
+
+* 
+
+Changed
+^^^^^
+
+* Use only one ``ROUGH_TERRAINS_CFG`` for all robots
+* Change simulation frequency to 200 Hz
+* Change ``robots/unitree_go2`` folder to just ``go2``
+* Use the same reward terms and weights for all tasks
+* Update reward terms weights
+* Include ``rew_feet_air_time`` reward term
+* Remove ``pen_feet_slide`` penalization term
+
+
 3.3.0 (2024-10-20)
 ~~~~~~~~~~~~~~~~~~
 
