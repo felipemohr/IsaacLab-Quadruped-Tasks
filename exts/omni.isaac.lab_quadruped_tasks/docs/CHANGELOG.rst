@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-4.0.0 (Unreleased)
+4.0.0 (2025-01-06)
 ~~~~~~~~~~~~~~~~~~
 
 Added
@@ -14,6 +14,7 @@ Added
 Changed
 ^^^^^
 
+* Update pre-trained models for all tasks and robots
 * Update for Isaac Lab 1.3.0
 * Update reward terms weights
 * Use only one ``ROUGH_TERRAINS_CFG`` for all robots
