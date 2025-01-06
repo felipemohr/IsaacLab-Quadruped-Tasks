@@ -7,16 +7,19 @@ Changelog
 Added
 ^^^^^
 
-* 
+* Create ``vision`` and ``vision_stairs`` tasks for the three robots
+* Create ``invert_vel_cmd`` event
+* Create `FULL_TERRAINS_CFG` terrain
 
 Changed
 ^^^^^
 
+* Update for Isaac Lab 1.3.0
+* Update reward terms weights
 * Use only one ``ROUGH_TERRAINS_CFG`` for all robots
 * Change simulation frequency to 200 Hz
 * Change ``robots/unitree_go2`` folder to just ``go2``
 * Use the same reward terms and weights for all tasks
-* Update reward terms weights
 * Include ``rew_feet_air_time`` reward term
 * Remove ``pen_feet_slide`` penalization term
 

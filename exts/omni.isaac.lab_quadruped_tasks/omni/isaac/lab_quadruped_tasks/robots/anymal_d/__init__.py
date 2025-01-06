@@ -22,6 +22,15 @@ anymal_d_blind_rough_runner_cfg.experiment_name = "anymal_d_blind_rough"
 anymal_d_blind_stairs_runner_cfg = QuadrupedPPORunnerCfg()
 anymal_d_blind_stairs_runner_cfg.experiment_name = "anymal_d_blind_stairs"
 
+anymal_d_vision_runner_cfg = QuadrupedPPORunnerCfg()
+anymal_d_vision_runner_cfg.experiment_name = "anymal_d_vision"
+anymal_d_vision_runner_cfg.policy.actor_hidden_dims = [512, 256, 128]
+anymal_d_vision_runner_cfg.policy.critic_hidden_dims = [512, 256, 128]
+
+anymal_d_vision_stairs_runner_cfg = QuadrupedPPORunnerCfg()
+anymal_d_vision_stairs_runner_cfg.experiment_name = "anymal_d_vision_stairs"
+anymal_d_vision_stairs_runner_cfg.policy.actor_hidden_dims = [512, 256, 128]
+anymal_d_vision_stairs_runner_cfg.policy.critic_hidden_dims = [512, 256, 128]
 
 ##
 # Register Gym environments
@@ -96,5 +105,53 @@ gym.register(
     kwargs={
         "env_cfg_entry_point": anymal_d_env_cfg.AnymalDBlindStairsEnvCfg_PLAY,
         "rsl_rl_cfg_entry_point": anymal_d_blind_stairs_runner_cfg,
+    },
+)
+
+#############################
+# Anymal D Vision Environment
+#############################
+
+gym.register(
+    id="Isaac-Quadruped-AnymalD-Vision-v0",
+    entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
+    disable_env_checker=True,
+    kwargs={
+        "env_cfg_entry_point": anymal_d_env_cfg.AnymalDVisionEnvCfg,
+        "rsl_rl_cfg_entry_point": anymal_d_vision_runner_cfg,
+    },
+)
+
+gym.register(
+    id="Isaac-Quadruped-AnymalD-Vision-Play-v0",
+    entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
+    disable_env_checker=True,
+    kwargs={
+        "env_cfg_entry_point": anymal_d_env_cfg.AnymalDVisionEnvCfg_PLAY,
+        "rsl_rl_cfg_entry_point": anymal_d_vision_runner_cfg,
+    },
+)
+
+####################################
+# Anymal D Vision Stairs Environment
+####################################
+
+gym.register(
+    id="Isaac-Quadruped-AnymalD-Vision-Stairs-v0",
+    entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
+    disable_env_checker=True,
+    kwargs={
+        "env_cfg_entry_point": anymal_d_env_cfg.AnymalDVisionStairsEnvCfg,
+        "rsl_rl_cfg_entry_point": anymal_d_vision_stairs_runner_cfg,
+    },
+)
+
+gym.register(
+    id="Isaac-Quadruped-AnymalD-Vision-Stairs-Play-v0",
+    entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
+    disable_env_checker=True,
+    kwargs={
+        "env_cfg_entry_point": anymal_d_env_cfg.AnymalDVisionStairsEnvCfg_PLAY,
+        "rsl_rl_cfg_entry_point": anymal_d_vision_stairs_runner_cfg,
     },
 )

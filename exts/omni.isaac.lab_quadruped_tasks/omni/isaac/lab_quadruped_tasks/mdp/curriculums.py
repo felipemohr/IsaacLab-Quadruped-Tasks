@@ -51,7 +51,7 @@ def disable_termination(
     term_name: str,
     num_steps: int,
 ) -> torch.Tensor:
-    """Curriculum that modifies the push velocity range at a given number of steps.
+    """Curriculum that disables a termination term at a given number of steps.
 
     Args:
         env: The learning environment.

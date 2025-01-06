@@ -18,7 +18,7 @@ from omni.isaac.lab.managers import TerminationTermCfg as DoneTerm
 from omni.isaac.lab.managers import CurriculumTermCfg as CurrTerm
 from omni.isaac.lab.managers import SceneEntityCfg
 from omni.isaac.lab.scene import InteractiveSceneCfg
-from omni.isaac.lab.sensors import ContactSensorCfg
+from omni.isaac.lab.sensors import ContactSensorCfg, RayCasterCfg, patterns
 from omni.isaac.lab.sim import RigidBodyMaterialCfg, MdlFileCfg, DomeLightCfg
 from omni.isaac.lab.terrains import TerrainImporterCfg
 from omni.isaac.lab.utils.noise import AdditiveGaussianNoiseCfg as GaussianNoise
@@ -75,6 +75,17 @@ class QuadrupedSceneCfg(InteractiveSceneCfg):
         prim_path="{ENV_REGEX_NS}/Robot/.*", history_length=4, track_air_time=True, update_period=0.0
     )
 
+    # height scanner sensor
+    height_scanner = RayCasterCfg(
+        prim_path="{ENV_REGEX_NS}/Robot/base",
+        offset=RayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 20.0)),
+        attach_yaw_only=True,
+        pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=[1.6, 1.0]),
+        debug_vis=True,
+        mesh_prim_paths=["/World/ground"],
+        update_period=0.1,
+    )
+
 
 ##############
 # MDP settings
@@ -93,7 +104,9 @@ class CommandsCfg:
         debug_vis=True,
         resampling_time_range=(10.0, 10.0),
         ranges=mdp.UniformVelocityCommandCfg.Ranges(
-            lin_vel_x=(-1.5, 1.5), lin_vel_y=(-1.0, 1.0), ang_vel_z=(-math.pi / 2, math.pi / 2)
+            lin_vel_x=(-1.0, 1.0),
+            lin_vel_y=(-1.0, 1.0),
+            ang_vel_z=(-math.pi / 2, math.pi / 2),
         ),
     )
 
@@ -102,7 +115,7 @@ class CommandsCfg:
 class ActionsCfg:
     """Action specifications for the MDP"""
 
-    joint_pos = mdp.JointPositionActionCfg(asset_name="robot", joint_names=[".*"], scale=0.2, use_default_offset=True)
+    joint_pos = mdp.JointPositionActionCfg(asset_name="robot", joint_names=[".*"], scale=0.5, use_default_offset=True)
 
 
 @configclass
@@ -123,9 +136,18 @@ class ObservarionsCfg:
 
         # robot joint measurements
         joint_pos = ObsTerm(func=mdp.joint_pos_rel, noise=GaussianNoise(mean=0.0, std=0.01))
+        joint_vel = ObsTerm(func=mdp.joint_vel_rel, noise=GaussianNoise(mean=0.0, std=0.5))
 
         # last action
         last_action = ObsTerm(func=mdp.last_action)
+
+        # height map
+        height_map = ObsTerm(
+            func=mdp.height_scan,
+            params={"sensor_cfg": SceneEntityCfg("height_scanner")},
+            noise=GaussianNoise(mean=0.0, std=0.05),
+            clip=(-1.0, 1.0),
+        )
 
         def __post_init__(self):
             self.enable_corruption = True
@@ -175,6 +197,8 @@ class EventsCfg:
         },
     )
 
+    change_vel_cmd = EventTerm(func=mdp.invert_vel_cmd, mode="reset", params={"command_name": "base_velocity"})
+
     # interval
     push_robot = EventTerm(
         func=mdp.push_by_setting_velocity,
@@ -190,14 +214,14 @@ class RewardsCfg:
 
     # rewards
     rew_lin_vel_xy = RewTerm(
-        func=mdp.track_lin_vel_xy_exp, weight=1.0, params={"command_name": "base_velocity", "std": math.sqrt(0.25)}
+        func=mdp.track_lin_vel_xy_exp, weight=2.0, params={"command_name": "base_velocity", "std": math.sqrt(0.25)}
     )
     rew_ang_vel_z = RewTerm(
-        func=mdp.track_ang_vel_z_exp, weight=0.5, params={"command_name": "base_velocity", "std": math.sqrt(0.25)}
+        func=mdp.track_ang_vel_z_exp, weight=1.0, params={"command_name": "base_velocity", "std": math.sqrt(0.25)}
     )
     rew_feet_air_time = RewTerm(
         func=mdp.feet_air_time,
-        weight=0.25,
+        weight=1.25,
         params={
             "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*_foot"),
             "command_name": "base_velocity",
@@ -208,7 +232,7 @@ class RewardsCfg:
     # penalizations
     pen_joint_deviation = RewTerm(
         func=mdp.joint_deviation_l1,
-        weight=-0.05,
+        weight=-0.125,
         params={"asset_cfg": SceneEntityCfg("robot", joint_names=[".*"])},
     )
     pen_undesired_contacts = RewTerm(
@@ -216,12 +240,20 @@ class RewardsCfg:
         weight=-1.0,
         params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*_thigh"), "threshold": 1.0},
     )
+    pen_feet_slide = RewTerm(
+        func=mdp.feet_slide,
+        weight=-0.1,
+        params={
+            "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*_foot"),
+            "asset_cfg": SceneEntityCfg("robot", body_names=".*_foot"),
+        },
+    )
     pen_lin_vel_z = RewTerm(func=mdp.lin_vel_z_l2, weight=-2.0)
-    pen_ang_vel_xy = RewTerm(func=mdp.ang_vel_xy_l2, weight=-0.05)
+    pen_ang_vel_xy = RewTerm(func=mdp.ang_vel_xy_l2, weight=-0.1)
     pen_action_rate = RewTerm(func=mdp.action_rate_l2, weight=-0.01)
     pen_joint_accel = RewTerm(func=mdp.joint_acc_l2, weight=-2.5e-7)
-    pen_joint_powers = RewTerm(func=mdp.joint_powers_l1, weight=-1e-4)
-    pen_flat_orientation = RewTerm(func=mdp.flat_orientation_l2, weight=-1.0)
+    pen_joint_powers = RewTerm(func=mdp.joint_powers_l1, weight=-5e-4)
+    pen_flat_orientation = RewTerm(func=mdp.flat_orientation_l2, weight=-5.0)
 
 
 @configclass
@@ -268,6 +300,7 @@ class QuadrupedEnvCfg(ManagerBasedRLEnvCfg):
         self.decimation = 4
         self.episode_length_s = 20.0
         self.sim.render_interval = 2 * self.decimation
+        self.sim.render_interval = 6
         # simulation settings
         self.sim.dt = 1 / 200.0
         self.seed = 42
