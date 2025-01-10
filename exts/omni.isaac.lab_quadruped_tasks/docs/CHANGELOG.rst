@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+X.0.0 (Unreleased)
+~~~~~~~~~~~~~~~~~~
+
+Added
+^^^^^
+
+* Create new `time_sines_cossines` observation term
+* Create new actions for quadruped robots - `JointCPGAction`
+
+
 4.0.0 (2025-01-06)
 ~~~~~~~~~~~~~~~~~~
 
