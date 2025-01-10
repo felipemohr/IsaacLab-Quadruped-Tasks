@@ -15,7 +15,7 @@ Changed
 ^^^^^
 
 * Update pre-trained models for all tasks and robots
-* Update for Isaac Lab 1.3.0
+* Update for Isaac Lab 1.4.0
 * Update reward terms weights
 * Use only one ``ROUGH_TERRAINS_CFG`` for all robots
 * Change simulation frequency to 200 Hz

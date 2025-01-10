@@ -3,7 +3,7 @@
 ![image](https://github.com/user-attachments/assets/e2a0a26e-0f06-4eb7-8478-d726585dac94)
 
 [![IsaacSim](https://img.shields.io/badge/IsaacSim-4.2.0-silver.svg)](https://docs.omniverse.nvidia.com/isaacsim/latest/overview.html)
-[![Isaac Lab](https://img.shields.io/badge/IsaacLab-1.3.0-silver)](https://isaac-sim.github.io/IsaacLab)
+[![Isaac Lab](https://img.shields.io/badge/IsaacLab-1.4.0-silver)](https://isaac-sim.github.io/IsaacLab)
 [![Python](https://img.shields.io/badge/python-3.10-blue.svg)](https://docs.python.org/3/whatsnew/3.10.html)
 [![Linux platform](https://img.shields.io/badge/platform-linux--64-orange.svg)](https://releases.ubuntu.com/20.04/)
 [![Windows platform](https://img.shields.io/badge/platform-windows--64-orange.svg)](https://www.microsoft.com/en-us/)
@@ -14,13 +14,13 @@
 
 This repository contains an extension with tasks for training quadruped robots using Reinforcement Learning in Isaac Lab.
 
-So far, there are three types of tasks that can be used to train three different quadruped robots:
+So far, there are five types of tasks that can be used to train three different quadruped robots:
 
-|                            | Flat terrain                            | Rough terrain                            | Stairs terrain                            |
-| -------------------------- | --------------------------------------- | ---------------------------------------- | ----------------------------------------- |
-| **ANYmal D (ANYbotics)**   | `Isaac-Quadruped-AnymalD-Blind-Flat-v0` | `Isaac-Quadruped-AnymalD-Blind-Rough-v0` | `Isaac-Quadruped-AnymalD-Blind-Stairs-v0` |
-| **Go2 (Unitree)**          | `Isaac-Quadruped-Go2-Blind-Flat-v0`     | `Isaac-Quadruped-Go2-Blind-Rough-v0`     | `Isaac-Quadruped-Go2-Blind-Stairs-v0`     |
-| **Spot (Boston Dynamics)** | `Isaac-Quadruped-Spot-Blind-Flat-v0`    | `Isaac-Quadruped-Spot-Blind-Rough-v0`    | `Isaac-Quadruped-Spot-Blind-Stairs-v0`    |
+|                            | Flat terrain (Blind)                    | Rough terrain (Blind)                    | Stairs terrain (Blind)                    | Rough terrain (Vision)                   | Stairs terrain (Vision)                    |
+| -------------------------- | --------------------------------------- | ---------------------------------------- | ----------------------------------------- | ---------------------------------------- | ------------------------------------------ |
+| **ANYmal D (ANYbotics)**   | `Isaac-Quadruped-AnymalD-Blind-Flat-v0` | `Isaac-Quadruped-AnymalD-Blind-Rough-v0` | `Isaac-Quadruped-AnymalD-Blind-Stairs-v0` | `Isaac-Quadruped-AnymalD-Vision-v0`      | `Isaac-Quadruped-AnymalD-Vision-Stairs-v0` |
+| **Go2 (Unitree)**          | `Isaac-Quadruped-Go2-Blind-Flat-v0`     | `Isaac-Quadruped-Go2-Blind-Rough-v0`     | `Isaac-Quadruped-Go2-Blind-Stairs-v0`     | `Isaac-Quadruped-Go2-Vision-v0`          | `Isaac-Quadruped-Go2-Vision-Stairs-v0`     |
+| **Spot (Boston Dynamics)** | `Isaac-Quadruped-Spot-Blind-Flat-v0`    | `Isaac-Quadruped-Spot-Blind-Rough-v0`    | `Isaac-Quadruped-Spot-Blind-Stairs-v0`    | `Isaac-Quadruped-Spot-Vision-v0`         | `Isaac-Quadruped-Spot-Vision-Stairs-v0`    |
 
 ## Installation
 1. Begin by installing NVIDIA's [Isaac Sim](https://docs.omniverse.nvidia.com/isaacsim/latest/installation/install_workstation.html) and [Isaac Lab](https://isaac-sim.github.io/IsaacLab/source/setup/installation/binaries_installation.html).
@@ -99,7 +99,7 @@ $ python scripts/rsl_rl/play.py --task Isaac-Quadruped-Go2-Blind-Rough-Play-v0 -
 
 ## Results
 
-Below are some videos recorded during the training process, for each of the tasks.
+Below are some videos recorded during the training process.
 
 ### Blind locomotion, flat terrain:
 
