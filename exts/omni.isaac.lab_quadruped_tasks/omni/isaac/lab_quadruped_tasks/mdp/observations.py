@@ -23,3 +23,10 @@ def feet_contact_bools(env: ManagerBasedRLEnv, sensor_cfg: SceneEntityCfg, thres
     net_contact_forces = contact_sensor.data.net_forces_w
     # check which contact forces exceed the threshold
     return torch.norm(net_contact_forces[:, sensor_cfg.body_ids], dim=-1) > threshold
+
+def time_sines_cossines(env: ManagerBasedRLEnv) -> torch.Tensor:
+    sines_cossines = torch.concatenate(
+        [torch.sin(torch.Tensor([env.sim.current_time])), torch.cos(torch.Tensor([env.sim.current_time]))]
+    ).to(env.device)
+    # return sines_cossines
+    return sines_cossines.unsqueeze(0).repeat(env.num_envs, 1)
