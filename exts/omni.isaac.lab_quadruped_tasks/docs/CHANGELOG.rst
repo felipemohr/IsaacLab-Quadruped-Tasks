@@ -8,7 +8,7 @@ Added
 ^^^^^
 
 * Create new `time_sines_cossines` observation term
-* Create new actions for quadruped robots - `JointCPGAction`
+* Create new actions for quadruped robots - `JointCPGAction` and `QuadrupedIKAction`
 
 
 4.0.0 (2025-01-06)
