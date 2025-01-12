@@ -7,7 +7,7 @@ X.0.0 (Unreleased)
 Added
 ^^^^^
 
-* Create new `time_sines_cossines` observation term
+* Create new `time_sine_cossine` observation term
 * Create new actions for quadruped robots - `JointCPGAction` and `QuadrupedIKAction`
 
 

@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 
 from omni.isaac.lab.managers import SceneEntityCfg
 from omni.isaac.lab.sensors import ContactSensor
+from omni.isaac.lab_quadruped_tasks.mdp.actions.quadruped_actions import QuadrupedCPGAction
 
 if TYPE_CHECKING:
     from omni.isaac.lab.envs import ManagerBasedRLEnv
@@ -24,9 +25,20 @@ def feet_contact_bools(env: ManagerBasedRLEnv, sensor_cfg: SceneEntityCfg, thres
     # check which contact forces exceed the threshold
     return torch.norm(net_contact_forces[:, sensor_cfg.body_ids], dim=-1) > threshold
 
-def time_sines_cossines(env: ManagerBasedRLEnv) -> torch.Tensor:
-    sines_cossines = torch.concatenate(
+
+def time_sine_cossine(env: ManagerBasedRLEnv) -> torch.Tensor:
+    """The time represented as sine and cossine."""
+
+    sine_cossine = torch.concatenate(
         [torch.sin(torch.Tensor([env.sim.current_time])), torch.cos(torch.Tensor([env.sim.current_time]))]
     ).to(env.device)
-    # return sines_cossines
-    return sines_cossines.unsqueeze(0).repeat(env.num_envs, 1)
+    return sine_cossine.unsqueeze(0).repeat(env.num_envs, 1)
+
+
+def cpg_states(env: ManagerBasedRLEnv, cpg_action_name: str) -> torch.Tensor:
+    """The Central Pattern Generator states from cpg action term in the action manager with the given name."""
+
+    # extract the used quantities (to enable type-hinting)
+    cpg_action: QuadrupedCPGAction = env.action_manager.get_term(cpg_action_name)
+    # return the states of the Central Pattern Generator
+    return cpg_action.get_cpg_states()

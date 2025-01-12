@@ -81,3 +81,33 @@ class QuadrupedIKActionCfg(ActionTermCfg):
     """The limit in y axis to compute inverse kinematics, disregarding the foot offset. Defaults to infinity."""
     action_limit_z: float = torch.inf
     """The limit in z axis to compute inverse kinematics, disregarding the foot offset. Defaults to infinity."""
+
+
+@configclass
+class QuadrupedCPGActionCfg(QuadrupedIKActionCfg):
+    """Configuration for the base joint action term.
+
+    See :class:`QuadrupedCPGAction` for more details.
+    """
+
+    class_type: type[ActionTerm] = quadruped_actions.QuadrupedCPGAction
+
+    frequency_limit: float = torch.inf
+    """The limit frequency in Hz to use in Central Pattern Generator. Defaults to infinity."""
+    oscilator_limit: float = torch.inf
+    """The limit of the oscilator amplitude to use in Central Pattern Generator. Defaults to infinity."""
+
+    step_size: float = 0.1
+    """The step size in meters used to convert the CPG space to cartesian space. Defaults to 0.2."""
+    ground_clearance: float = 0.1
+    """The maximum height of the foot when in swing fase in meters. Defaults to 0.1."""
+    ground_penetration: float = 0.005
+    """The maximum penetration of the foot in the ground when in swing fase in meters. Defaults to 0.005."""
+
+    body_height_offset: float = 0.0
+    """The offset of the body height in meters w.r.t its default height. Defaults to 0.0."""
+
+    gait_type: str = "trot"
+    """The gait type used to generate the gait pattern. Available options are ['trot', 'walk', 'pace', 'gallop'].
+    Defaults to 'trot'.
+    """

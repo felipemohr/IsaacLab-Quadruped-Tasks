@@ -326,7 +326,7 @@ class QuadrupedIKAction(ActionTerm):
             z = max_z * torch.tanh(z / max_z)
 
         x += self._foot_offsets["x"]
-        y += reflect * self._foot_offsets["x"]
+        y += reflect * self._foot_offsets["y"]
         z += self._foot_offsets["z"]
 
         a = torch.sqrt(y**2 + z**2 - L1**2)
@@ -338,3 +338,241 @@ class QuadrupedIKAction(ActionTerm):
         theta3 = torch.atan2(torch.sqrt(1.0 - B**2), B)
 
         return torch.concatenate([theta1.unsqueeze(1), -theta2.unsqueeze(1), -theta3.unsqueeze(1)], dim=1)
+
+
+class QuadrupedCPGAction(QuadrupedIKAction):
+
+    cfg: actions_cfg.QuadrupedCPGActionCfg
+    """The configuration of the action term."""
+
+    _frequency_limit: float
+    """The limit of frequency applied to the input action to generate CPG signal."""
+    _oscilator_limit: float
+    """The limit of the oscilator amplitude applied to the input action to generate CPG signal."""
+
+    _body_height_offset: float
+    """The offset in the body height w.r.t its default height."""
+
+    _step_size: float
+    """The step size used to map the CPG signals to cartseian space."""
+    _ground_clearance: float
+    """The maximum height above the ground of the foot used to map the CPG signals to cartseian space."""
+    _ground_penetration: float
+    """The maximum penetration of the foot in the ground used to map the CPG signals to cartseian space."""
+
+    _coupling_matrix: torch.Tensor
+    """The coupling matrix used to generate different types of gait."""
+    _supported_gait_types: list[str]
+    """A list containing all the supported gait types."""
+
+    def __init__(self, cfg: actions_cfg.QuadrupedCPGActionCfg, env: ManagerBasedEnv):
+        # initialize the action term
+        super().__init__(cfg, env)
+
+        # The _raw_actions tensor is from the QuadrupedIKAction
+        self._raw_actions = torch.zeros(self.num_envs, 12, device=self.device)
+        self._raw_actions_cpg = torch.zeros(self.num_envs, self.action_dim, device=self.device)
+
+        # CPG variables
+        self._convergence_factor_a = 50.0
+        self._coupling_weight = torch.ones(env.num_envs, 1, device=self.device)
+        self._amplitude_mu = torch.ones(env.num_envs, 4, 2, device=self.device)
+        self._frequency_omega = torch.zeros(env.num_envs, 4, device=self.device)
+
+        self._amplitude_r = torch.randn(env.num_envs, 4, 2, device=self.device)
+        self._amplitude_dr = torch.zeros(env.num_envs, 4, 2, device=self.device)
+        self._amplitude_d2r = torch.zeros(env.num_envs, 4, 2, device=self.device)
+
+        self._phase_theta = torch.randn(env.num_envs, 4, device=self.device)
+        self._phase_dtheta = torch.zeros(env.num_envs, 4, device=self.device)
+
+        self._control_period = env.sim.cfg.dt * env.cfg.decimation
+
+        # parse frequency and oscilator amplitude limits
+        if isinstance(cfg.frequency_limit, (float, int)):
+            self._frequency_limit = float(abs(cfg.frequency_limit))
+        else:
+            raise ValueError(f"Unsupported frequency_limit type: {type(cfg.frequency_limit)}. Supported type is float.")
+        if isinstance(cfg.oscilator_limit, (float, int)):
+            self._oscilator_limit = float(abs(cfg.oscilator_limit))
+        else:
+            raise ValueError(f"Unsupported oscilator_limit type: {type(cfg.oscilator_limit)}. Supported type is float.")
+
+        # parse step size, ground clearance and penetration
+        if isinstance(cfg.step_size, (float, int)):
+            self._step_size = float(abs(cfg.step_size))
+        else:
+            raise ValueError(f"Unsupported step_size type: {type(cfg.step_size)}. Supported type is float.")
+        if isinstance(cfg.ground_clearance, (float, int)):
+            self._ground_clearance = float(abs(cfg.ground_clearance))
+        else:
+            raise ValueError(
+                f"Unsupported ground_clearance type: {type(cfg.ground_clearance)}. Supported type is float."
+            )
+        if isinstance(cfg.ground_penetration, (float, int)):
+            self._ground_penetration = float(abs(cfg.ground_penetration))
+        else:
+            raise ValueError(
+                f"Unsupported ground_penetration type: {type(cfg.ground_penetration)}. Supported type is float."
+            )
+
+        # parse body height offset
+        if isinstance(cfg.body_height_offset, (float, int)):
+            self._body_height_offset = float(abs(cfg.body_height_offset))
+        else:
+            raise ValueError(
+                f"Unsupported body_height_offset type: {type(cfg.body_height_offset)}. Supported type is float."
+            )
+
+        # parse gait type to create coupling matrix
+        self._supported_gait_types = ["trot", "walk", "pace", "gallop"]
+        self.set_gait_type(cfg.gait_type)
+
+    """
+    Properties.
+    """
+
+    @property
+    def action_dim(self) -> int:
+        return 13  # amplitude_mu_x, amplitude_mu_y, and frequency for each foot and coupling weight
+
+    @property
+    def raw_actions(self) -> torch.Tensor:
+        return self._raw_actions_cpg
+
+    @property
+    def processed_actions(self) -> torch.Tensor:
+        return self._processed_actions
+
+    """
+    Operations.
+    """
+
+    def process_actions(self, actions: torch.Tensor):
+        # store the cpg raw actions
+        self._raw_actions_cpg[:] = actions
+
+        cpg_processed_action = self._step_cpg(self._raw_actions_cpg)
+
+        super().process_actions(cpg_processed_action)
+
+    def reset(self, env_ids: Sequence[int] | None = None) -> None:
+        super().reset(env_ids)
+        self._raw_actions_cpg[env_ids] = 0.0
+
+        num_resets = len(env_ids) if env_ids is not None else 0
+
+        self._amplitude_r[env_ids] = torch.randn(num_resets, 4, 2, device=self.device)
+        self._amplitude_dr[env_ids] = 0.0
+        self._amplitude_d2r[env_ids] = 0.0
+
+        self._phase_theta[env_ids] = torch.randn(num_resets, 4, device=self.device)
+        self._phase_dtheta[env_ids] = 0.0
+
+    def apply_actions(self):
+        super().apply_actions()
+
+    def set_gait_type(self, gait_type: str):
+        if isinstance(gait_type, str) and gait_type in self._supported_gait_types:
+            if gait_type == self._supported_gait_types[0]:
+                self._coupling_matrix = torch.Tensor(
+                    [
+                        [0, torch.pi, torch.pi, 0],
+                        [-torch.pi, 0, 0, -torch.pi],
+                        [-torch.pi, 0, 0, -torch.pi],
+                        [0, torch.pi, torch.pi, 0],
+                    ]
+                ).to(self.device)
+            elif gait_type == self._supported_gait_types[1]:
+                self._coupling_matrix = torch.Tensor(
+                    [
+                        [0, torch.pi, torch.pi / 2, 3 * torch.pi / 2],
+                        [-torch.pi, 0, -torch.pi / 2, -3 * torch.pi / 2],
+                        [-torch.pi / 2, torch.pi / 2, 0, -torch.pi],
+                        [-3 * torch.pi / 2, 3 * torch.pi / 2, torch.pi, 0],
+                    ]
+                ).to(self.device)
+            elif gait_type == self._supported_gait_types[2]:
+                self._coupling_matrix = torch.Tensor(
+                    [
+                        [0, torch.pi, torch.pi, torch.pi],
+                        [-torch.pi, 0, -torch.pi, 0],
+                        [0, torch.pi, 0, torch.pi],
+                        [-torch.pi, 0, -torch.pi, 0],
+                    ]
+                ).to(self.device)
+            elif gait_type == self._supported_gait_types[3]:
+                self._coupling_matrix = torch.Tensor(
+                    [
+                        [0, 0, -torch.pi, -torch.pi],
+                        [0, 0, -torch.pi, -torch.pi],
+                        [torch.pi, torch.pi, 0, 0],
+                        [torch.pi, torch.pi, 0, 0],
+                    ]
+                ).to(self.device)
+        else:
+            raise ValueError(f"Unsupported gait type: {gait_type}. Supported types are {self._supported_gait_types}.")
+
+    # Used by cpg_states observation
+    def get_cpg_states(self) -> torch.Tensor:
+        return torch.concatenate(
+            [
+                *(amp_r.squeeze(2) for amp_r in self._amplitude_r.split(1, dim=2)),
+                *(amp_dr.squeeze(2) for amp_dr in self._amplitude_r.split(1, dim=2)),
+                self._phase_theta,
+                self._phase_dtheta,
+            ],
+            dim=1,
+        )
+
+    """
+    Helper functions.
+    """
+
+    def _step_cpg(self, actions: torch.Tensor) -> torch.Tensor:
+        dt = self._control_period
+
+        if self._oscilator_limit < torch.inf:
+            self._amplitude_mu[:, :, 0] = self._oscilator_limit * torch.sigmoid(actions[:, :4] / self._oscilator_limit)
+            self._amplitude_mu[:, :, 1] = self._oscilator_limit * torch.sigmoid(actions[:, 4:8] / self._oscilator_limit)
+        else:
+            self._amplitude_mu[:, :, 0] = actions[:, :4]
+            self._amplitude_mu[:, :, 1] = actions[:, 4:8]
+
+        if self._frequency_limit < torch.inf:
+            self._frequency_omega = (
+                2.0 * torch.pi * self._frequency_limit * torch.sigmoid(actions[:, 8:12] / self._frequency_limit)
+            )
+        else:
+            self._frequency_omega = 2.0 * torch.pi * actions[8:12]
+
+        self._coupling_weight = torch.sigmoid(actions[:, 12]).unsqueeze(1)
+
+        self._amplitude_d2r = self._convergence_factor_a * (
+            self._convergence_factor_a / 4.0 * (self._amplitude_mu - self._amplitude_r) - self._amplitude_dr
+        )
+        self._amplitude_dr += self._amplitude_d2r * dt
+
+        self._phase_dtheta[:] = self._frequency_omega[:]
+        for i in range(4):
+            for j in range(4):
+                self._phase_dtheta[:, i] += 0.5 * (
+                    (self._amplitude_r[:, j, 0] + self._amplitude_r[:, j, 1])
+                    * self._coupling_weight[:, 0]
+                    * torch.sin(self._phase_theta[:, j] - self._phase_theta[:, i] - self._coupling_matrix[i][j])
+                )
+
+        self._amplitude_r += self._amplitude_dr * dt
+        self._phase_theta += self._phase_dtheta * dt
+
+        self._phase_theta %= 2 * torch.pi
+
+        ground_multiplier = torch.where(
+            torch.sin(self._phase_theta) > 0, self._ground_clearance, self._ground_penetration
+        )
+
+        foot_x = -self._step_size * self._amplitude_r[:, :, 0] * torch.cos(self._phase_theta)
+        foot_y = -self._step_size * self._amplitude_r[:, :, 1] * torch.cos(self._phase_theta)
+        foot_z = ground_multiplier * torch.sin(self._phase_theta)
+
+        return torch.stack([foot_x, foot_y, foot_z], dim=2).reshape(self._env.num_envs, -1)
