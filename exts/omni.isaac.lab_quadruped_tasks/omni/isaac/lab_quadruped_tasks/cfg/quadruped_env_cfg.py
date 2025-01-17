@@ -115,7 +115,56 @@ class CommandsCfg:
 class ActionsCfg:
     """Action specifications for the MDP"""
 
-    joint_pos = mdp.JointPositionActionCfg(asset_name="robot", joint_names=[".*"], scale=0.5, use_default_offset=True)
+    # joint_pos = mdp.JointPositionActionCfg(asset_name="robot", joint_names=[".*"], scale=0.5, use_default_offset=True)
+
+    # ik_action = mdp.QuadrupedIKActionCfg(
+    # asset_name="robot",
+    # front_left_joints=["FL_.*"],
+    # front_right_joints=["FR_.*"],
+    # rear_left_joints=["RL_.*"],
+    # rear_right_joints=["RR_.*"],
+    # hip_length=0.0955,
+    # thigh_length=0.2130,
+    # calf_length=0.2130,
+    # foot_offset_x=0.0,
+    # foot_offset_y=0.0955,
+    # foot_offset_z=-0.3012,
+    # )
+
+    # cpg_action = mdp.JointCPGActionCfg(
+    #     asset_name="robot",
+    #     joint_names=[".*"],
+    #     phase_offset={"FL_.*": 0.0, "FR_.*": 3.14, "RL_.*": 3.14, "RR_.*": 0.0},
+    #     scale=0.2,
+    #     use_default_offset=True,
+    #     frequency_limit=4.0,
+    #     oscilator_limit=2.0,
+    # )
+
+    cpg_action = mdp.QuadrupedCPGActionCfg(
+        asset_name="robot",
+        # IK Parameters
+        front_left_joints=["FL_.*"],
+        front_right_joints=["FR_.*"],
+        rear_left_joints=["RL_.*"],
+        rear_right_joints=["RR_.*"],
+        hip_length=0.0955,
+        thigh_length=0.2130,
+        calf_length=0.2130,
+        foot_offset_x=0.0,
+        foot_offset_y=0.0955,
+        foot_offset_z=-0.3012,
+        # CPG Parameters
+        swing_frequency_limit=5.0,
+        stance_frequency_limit=3.0,
+        oscilator_limit=1.5,
+        step_size=0.1,
+        ground_clearance=0.1,
+        ground_penetration=0.01,
+        body_height_offset=0.0,
+        gait_type="trot",
+    )
+    # TODO: Remove from tasks
 
 
 @configclass
@@ -137,6 +186,19 @@ class ObservarionsCfg:
         # robot joint measurements
         joint_pos = ObsTerm(func=mdp.joint_pos_rel, noise=GaussianNoise(mean=0.0, std=0.01))
         joint_vel = ObsTerm(func=mdp.joint_vel_rel, noise=GaussianNoise(mean=0.0, std=0.5))
+
+        # feet contact booleans
+        feet_contact = ObsTerm(
+            func=mdp.feet_contact_bools,
+            params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*_foot"), "threshold": 5.0},
+        )
+
+        # cpg state
+        cpg_state = ObsTerm(func=mdp.cpg_states, params={"cpg_action_name": "cpg_action"})
+
+        # time measurements
+        # time_sine_cossine = ObsTerm(func=mdp.time_sine_cossine, noise=None)
+        # TODO: Remove from tasks
 
         # last action
         last_action = ObsTerm(func=mdp.last_action)
@@ -255,6 +317,7 @@ class RewardsCfg:
     pen_joint_powers = RewTerm(func=mdp.joint_powers_l1, weight=-5e-4)
     pen_flat_orientation = RewTerm(func=mdp.flat_orientation_l2, weight=-5.0)
 
+    pen_offset_joints = RewTerm(func=mdp.partial_action_l2, weight=-0.01, params={"first_idx": 8, "last_idx": 20})
 
 @configclass
 class TerminationsCfg:
@@ -297,10 +360,9 @@ class QuadrupedEnvCfg(ManagerBasedRLEnvCfg):
 
     def __post_init__(self):
         """Post initialization"""
-        self.decimation = 4
+        self.decimation = 8
         self.episode_length_s = 20.0
-        self.sim.render_interval = 2 * self.decimation
-        self.sim.render_interval = 6
+        self.sim.render_interval = 10
         # simulation settings
-        self.sim.dt = 1 / 200.0
+        self.sim.dt = 1 / 400.0
         self.seed = 42

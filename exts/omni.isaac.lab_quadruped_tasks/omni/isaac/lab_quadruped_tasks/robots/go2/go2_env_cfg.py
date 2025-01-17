@@ -36,13 +36,32 @@ class Go2BaseEnvCfg(QuadrupedEnvCfg):
             ".*thigh_joint": math.pi / 4,
             ".*calf_joint": -math.pi / 2,
         }
+        self.scene.robot.init_state.pos = (0, 0, 0.32)
+        self.scene.robot.actuators["base_legs"].stiffness = 100.0
+        self.scene.robot.actuators["base_legs"].damping = 2.0
 
-        self.actions.joint_pos.scale = 0.2
+        self.rewards.pen_lin_vel_z.weight = -1.0
+        self.rewards.pen_ang_vel_xy.weight = -0.05
 
-        self.rewards.rew_feet_air_time.weight = 0.75
-        self.rewards.pen_joint_powers.weight = -3e-3
-        self.rewards.pen_joint_deviation.weight = -0.1
-        self.rewards.pen_undesired_contacts.weight = -0.25
+        self.rewards.rew_lin_vel_xy.weight = 3.0
+        self.rewards.rew_ang_vel_z.weight = 1.5
+        self.rewards.pen_joint_powers.weight = -1e-3
+
+        self.rewards.rew_feet_air_time = None
+        self.rewards.pen_joint_deviation = None
+        self.rewards.pen_undesired_contacts = None
+        self.rewards.pen_feet_slide = None
+        self.rewards.pen_action_rate = None
+        self.rewards.pen_joint_accel = None
+        self.rewards.pen_flat_orientation = None
+        # self.terminations.base_contact = None
+
+        # self.actions.joint_pos.scale = 0.2
+
+        # self.rewards.rew_feet_air_time.weight = 0.75
+        # self.rewards.pen_joint_powers.weight = -3e-3
+        # self.rewards.pen_joint_deviation.weight = -0.1
+        # self.rewards.pen_undesired_contacts.weight = -0.25
 
 @configclass
 class Go2BaseEnvCfg_PLAY(Go2BaseEnvCfg):
