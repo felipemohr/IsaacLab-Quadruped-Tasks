@@ -7,8 +7,10 @@ X.0.0 (Unreleased)
 Added
 ^^^^^
 
+* Create new `partial_action_l2` reward term
 * Create new `time_sine_cossine` observation term
-* Create new actions for quadruped robots - `JointCPGAction` and `QuadrupedIKAction`
+* Create new `change_gait_type` event term
+* Create new actions for quadruped robots - `JointCPGAction`, `QuadrupedIKAction` and `QuadrupedCPGAction`
 
 
 4.0.0 (2025-01-06)

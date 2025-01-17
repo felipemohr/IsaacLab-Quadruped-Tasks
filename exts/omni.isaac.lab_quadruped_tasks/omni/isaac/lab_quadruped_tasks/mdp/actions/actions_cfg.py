@@ -35,6 +35,9 @@ class JointCPGActionCfg(JointActionCfg):
     from the articulation asset.
     """
 
+    convergence_factor: float = 50.0
+    """The convergence factor used to generate the CPG signals. Defaults to 50.0."""
+
     phase_offset: float | dict[str, float] = 0.0
     """Phase offset factor for the action (float or dict of regex expressions). Defaults to 0.0."""
 
@@ -103,6 +106,8 @@ class QuadrupedCPGActionCfg(QuadrupedIKActionCfg):
     oscilator_limit: float = torch.inf
     """The limit of the oscilator amplitude to use in Central Pattern Generator. Defaults to infinity."""
 
+    convergence_factor: float = 50.0
+    """The convergence factor used to generate the CPG signals. Defaults to 50.0."""
     step_size: float = 0.1
     """The step size in meters used to convert the CPG space to cartesian space. Defaults to 0.2."""
     ground_clearance: float = 0.1

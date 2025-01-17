@@ -23,5 +23,5 @@ def joint_powers_l1(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEnt
     return torch.sum(torch.abs(torch.mul(asset.data.applied_torque, asset.data.joint_vel)), dim=1)
 
 def partial_action_l2(env: ManagerBasedRLEnv, first_idx: int, last_idx: int) -> torch.Tensor:
-    """Penalize the actions using L2 squared kernel."""
+    """Penalize parcial actions using L2 squared kernel."""
     return torch.sum(torch.square(env.action_manager.action[:, first_idx:last_idx+1]), dim=1)

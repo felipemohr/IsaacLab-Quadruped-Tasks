@@ -259,6 +259,8 @@ class EventsCfg:
         },
     )
 
+    change_gait = EventTerm(func=mdp.change_gait_type, mode="reset", params={"action_name": "cpg_action"})
+
     change_vel_cmd = EventTerm(func=mdp.invert_vel_cmd, mode="reset", params={"command_name": "base_velocity"})
 
     # interval

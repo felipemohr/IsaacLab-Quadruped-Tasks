@@ -65,8 +65,6 @@ class JointCPGAction(ActionTerm):
         self._raw_actions = torch.zeros(self.num_envs, self.action_dim, device=self.device)
         self._processed_actions = torch.zeros(self.num_envs, self._num_joints, device=self.device)
 
-        # TODO: convergence factor is hard-coded
-        self._convergence_factor_a = 50.0
         self._amplitude_mu = torch.ones(env.num_envs, self._num_joints, device=self.device)
         self._frequency_omega = torch.zeros(env.num_envs, self._num_joints, device=self.device)
 
@@ -121,7 +119,13 @@ class JointCPGAction(ActionTerm):
                 f"Unsupported phase_offset type: {type(cfg.phase_offset)}. Supported types are float and dict."
             )
 
-        # parse frequency and oscilator amplitude limits
+        # parse convergence factor and frequency and oscilator amplitude limits
+        if isinstance(cfg.convergence_factor, (float, int)):
+            self._convergence_factor_a = float(abs(cfg.convergence_factor))
+        else:
+            raise ValueError(
+                f"Unsupported convergence_factor type: {type(cfg.convergence_factor)}. Supported type is float."
+            )
         if isinstance(cfg.frequency_limit, (float, int)):
             self._frequency_limit = float(abs(cfg.frequency_limit))
         else:
@@ -431,12 +435,12 @@ class QuadrupedCPGAction(QuadrupedIKAction):
         self._raw_actions_cpg = torch.zeros(self.num_envs, self.action_dim, device=self.device)
 
         # CPG variables
-        self._convergence_factor_a = 50.0
         self._coupling_weight = torch.ones(env.num_envs, 1, device=self.device)
         self._amplitude_mu = torch.ones(env.num_envs, 4, device=self.device)
         self._swing_frequency = torch.zeros(env.num_envs, 1, device=self.device)
         self._stance_frequency = torch.zeros(env.num_envs, 1, device=self.device)
         self._frequency_omega = torch.zeros(env.num_envs, 4, device=self.device)
+        self._coupling_matrix = torch.zeros(env.num_envs, 4, 4, device=self.device)
         self._omnidirectional_offset = torch.zeros(self.num_envs, 1, device=self.device)
         self._joint_offsets = torch.zeros(self.num_envs, 12, device=self.device)
 
@@ -449,7 +453,13 @@ class QuadrupedCPGAction(QuadrupedIKAction):
 
         self._control_period = env.sim.cfg.dt * env.cfg.decimation
 
-        # parse frequency and oscilator amplitude limits
+        # parse convergence factor and frequency and oscilator amplitude limits
+        if isinstance(cfg.convergence_factor, (float, int)):
+            self._convergence_factor_a = float(abs(cfg.convergence_factor))
+        else:
+            raise ValueError(
+                f"Unsupported convergence_factor type: {type(cfg.convergence_factor)}. Supported type is float."
+            )
         if isinstance(cfg.swing_frequency_limit, (float, int)):
             self._swing_frequency_limit = float(abs(cfg.swing_frequency_limit))
         else:
@@ -493,7 +503,41 @@ class QuadrupedCPGAction(QuadrupedIKAction):
                 f"Unsupported body_height_offset type: {type(cfg.body_height_offset)}. Supported type is float."
             )
 
-        # parse gait type to create coupling matrix
+        # create gait matrices to parse coupling matrix
+        trot_matrix = torch.Tensor(
+            [
+                [0, torch.pi, torch.pi, 0],
+                [-torch.pi, 0, 0, -torch.pi],
+                [-torch.pi, 0, 0, -torch.pi],
+                [0, torch.pi, torch.pi, 0],
+            ]
+        ).to(self.device)
+        walk_matrix = torch.Tensor(
+            [
+                [0, torch.pi, torch.pi / 2, 3 * torch.pi / 2],
+                [-torch.pi, 0, -torch.pi / 2, -3 * torch.pi / 2],
+                [-torch.pi / 2, torch.pi / 2, 0, -torch.pi],
+                [-3 * torch.pi / 2, 3 * torch.pi / 2, torch.pi, 0],
+            ]
+        ).to(self.device)
+        pace_matrix = torch.Tensor(
+            [
+                [0, torch.pi, torch.pi, torch.pi],
+                [-torch.pi, 0, -torch.pi, 0],
+                [0, torch.pi, 0, torch.pi],
+                [-torch.pi, 0, -torch.pi, 0],
+            ]
+        ).to(self.device)
+        gallop_matrix = torch.Tensor(
+            [
+                [0, 0, -torch.pi, -torch.pi],
+                [0, 0, -torch.pi, -torch.pi],
+                [torch.pi, torch.pi, 0, 0],
+                [torch.pi, torch.pi, 0, 0],
+            ]
+        ).to(self.device)
+
+        self._gait_matrices = torch.stack([trot_matrix, walk_matrix, pace_matrix, gallop_matrix])
         self._supported_gait_types = ["trot", "walk", "pace", "gallop"]
         self.set_gait_type(cfg.gait_type)
 
@@ -512,6 +556,10 @@ class QuadrupedCPGAction(QuadrupedIKAction):
     @property
     def processed_actions(self) -> torch.Tensor:
         return self._processed_actions
+
+    @property
+    def supported_gaits(self) -> Sequence[str]:
+        return self._supported_gait_types
 
     """
     Operations.
@@ -547,46 +595,24 @@ class QuadrupedCPGAction(QuadrupedIKAction):
     def apply_actions(self):
         super().apply_actions()
 
-    def set_gait_type(self, gait_type: str):
-        if isinstance(gait_type, str) and gait_type in self._supported_gait_types:
-            if gait_type == self._supported_gait_types[0]:
-                self._coupling_matrix = torch.Tensor(
-                    [
-                        [0, torch.pi, torch.pi, 0],
-                        [-torch.pi, 0, 0, -torch.pi],
-                        [-torch.pi, 0, 0, -torch.pi],
-                        [0, torch.pi, torch.pi, 0],
-                    ]
-                ).to(self.device)
-            elif gait_type == self._supported_gait_types[1]:
-                self._coupling_matrix = torch.Tensor(
-                    [
-                        [0, torch.pi, torch.pi / 2, 3 * torch.pi / 2],
-                        [-torch.pi, 0, -torch.pi / 2, -3 * torch.pi / 2],
-                        [-torch.pi / 2, torch.pi / 2, 0, -torch.pi],
-                        [-3 * torch.pi / 2, 3 * torch.pi / 2, torch.pi, 0],
-                    ]
-                ).to(self.device)
-            elif gait_type == self._supported_gait_types[2]:
-                self._coupling_matrix = torch.Tensor(
-                    [
-                        [0, torch.pi, torch.pi, torch.pi],
-                        [-torch.pi, 0, -torch.pi, 0],
-                        [0, torch.pi, 0, torch.pi],
-                        [-torch.pi, 0, -torch.pi, 0],
-                    ]
-                ).to(self.device)
-            elif gait_type == self._supported_gait_types[3]:
-                self._coupling_matrix = torch.Tensor(
-                    [
-                        [0, 0, -torch.pi, -torch.pi],
-                        [0, 0, -torch.pi, -torch.pi],
-                        [torch.pi, torch.pi, 0, 0],
-                        [torch.pi, torch.pi, 0, 0],
-                    ]
-                ).to(self.device)
-        else:
-            raise ValueError(f"Unsupported gait type: {gait_type}. Supported types are {self._supported_gait_types}.")
+    def set_gait_type(self, gait_type: str | torch.Tensor, env_ids: torch.Tensor | None = None):
+        if isinstance(gait_type, str):
+            if gait_type in self._supported_gait_types:
+                self._coupling_matrix[:] = self._gait_matrices[self._supported_gait_types.index(gait_type)]
+            else:
+                raise ValueError(
+                    f"Unsupported gait type: {gait_type}. Supported types are {self._supported_gait_types}."
+                )
+        elif isinstance(gait_type, torch.Tensor):
+            if env_ids == None:
+                env_ids = torch.arange(self.num_envs, device=self.device)
+            num_gaits = len(self._supported_gait_types)
+            if torch.all((0 <= gait_type) & (gait_type < num_gaits)):
+                self._coupling_matrix[env_ids] = self._gait_matrices[gait_type]
+            else:
+                raise ValueError(
+                    f"Invalid gait type index found in gait_type. Valid indices are between 0 and {num_gaits - 1}."
+                )
 
     # Used by cpg_states observation
     def get_cpg_states(self) -> torch.Tensor:
@@ -646,7 +672,7 @@ class QuadrupedCPGAction(QuadrupedIKAction):
                 self._phase_dtheta[:, i] += (
                     self._amplitude_r[:, j]
                     * self._coupling_weight[:, 0]
-                    * torch.sin(self._phase_theta[:, j] - self._phase_theta[:, i] - self._coupling_matrix[i][j])
+                    * torch.sin(self._phase_theta[:, j] - self._phase_theta[:, i] - self._coupling_matrix[:, i, j])
                 )
 
         self._amplitude_r += self._amplitude_dr * dt
