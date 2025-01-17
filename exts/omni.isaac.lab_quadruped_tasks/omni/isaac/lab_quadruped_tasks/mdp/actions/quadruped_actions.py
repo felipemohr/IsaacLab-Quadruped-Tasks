@@ -29,14 +29,18 @@ class JointCPGAction(ActionTerm):
     """The configuration of the action term."""
     _asset: Articulation
     """The articulation asset on which the action term is applied."""
+
+    _frequency_limit: float
+    """The limit of frequency applied to the input action to generate CPG signal."""
+    _oscilator_limit: float
+    """The limit of the oscilator amplitude applied to the input action to generate CPG signal."""
+
     _scale: torch.Tensor | float
     """The scaling factor applied to the input action."""
     _offset: torch.Tensor | float
     """The offset applied to the input action."""
-    _frequency_omega: torch.Tensor | float
-    """The frequency of the oscilator applied to the input action."""
-    _phase_beta: torch.Tensor | float
-    """The phase offset of the oscilator applied to the input action."""
+    _phase_offset: torch.Tensor | float
+    """The phase offset applied to the input action."""
 
     def __init__(self, cfg: actions_cfg.JointCPGActionCfg, env: ManagerBasedEnv) -> None:
         # initialize the action term
@@ -60,10 +64,19 @@ class JointCPGAction(ActionTerm):
         # create tensors for raw and processed actions
         self._raw_actions = torch.zeros(self.num_envs, self.action_dim, device=self.device)
         self._processed_actions = torch.zeros(self.num_envs, self._num_joints, device=self.device)
-        # self._processed_actions = torch.zeros_like(self.raw_actions)
 
-        # Create tensor for time elapsed
-        self._time_elapsed = torch.zeros(self.num_envs, self._num_joints, device=self.device)
+        # TODO: convergence factor is hard-coded
+        self._convergence_factor_a = 50.0
+        self._amplitude_mu = torch.ones(env.num_envs, self._num_joints, device=self.device)
+        self._frequency_omega = torch.zeros(env.num_envs, self._num_joints, device=self.device)
+
+        self._amplitude_r = torch.randn(env.num_envs, self._num_joints, device=self.device)
+        self._amplitude_dr = torch.zeros(env.num_envs, self._num_joints, device=self.device)
+        self._amplitude_d2r = torch.zeros(env.num_envs, self._num_joints, device=self.device)
+
+        self._phase_theta = torch.randn(env.num_envs, self._num_joints, device=self.device)
+        self._phase_dtheta = torch.zeros(env.num_envs, self._num_joints, device=self.device)
+
         self._control_period = env.sim.cfg.dt * env.cfg.decimation
 
         # parse scale
@@ -92,34 +105,31 @@ class JointCPGAction(ActionTerm):
                 self._offset[:, index_list] = torch.tensor(value_list, device=self.device)
             else:
                 raise ValueError(f"Unsupported offset type: {type(cfg.offset)}. Supported types are float and dict.")
-        # parse frequency omega
-        if isinstance(cfg.frequency_omega, (float, int)):
-            self._frequency_omega = float(cfg.frequency_omega)
-        elif isinstance(cfg.frequency_omega, dict):
-            self._frequency_omega = torch.ones(self.num_envs, self._num_joints, device=self.device)
+
+        # parse phase_offset
+        if isinstance(cfg.phase_offset, (float, int)):
+            self._phase_offset = float(cfg.phase_offset)
+        elif isinstance(cfg.phase_offset, dict):
+            self._phase_offset = torch.zeros_like(self._processed_actions)
             # resolve the dictionary config
             index_list, _, value_list = string_utils.resolve_matching_names_values(
-                self.cfg.frequency_omega, self._joint_names
+                self.cfg.phase_offset, self._joint_names
             )
-            self._frequency_omega[:, index_list] = torch.tensor(value_list, device=self.device)
+            self._phase_offset[:, index_list] = torch.tensor(value_list, device=self.device)
         else:
             raise ValueError(
-                f"Unsupported frequency_omega type: {type(cfg.frequency_omega)}. Supported types are float and dict."
+                f"Unsupported phase_offset type: {type(cfg.phase_offset)}. Supported types are float and dict."
             )
-        # parse phase_beta
-        if isinstance(cfg.phase_beta, (float, int)):
-            self._phase_beta = float(cfg.phase_beta)
-        elif isinstance(cfg.phase_beta, dict):
-            self._phase_beta = torch.zeros_like(self._processed_actions)
-            # resolve the dictionary config
-            index_list, _, value_list = string_utils.resolve_matching_names_values(
-                self.cfg.phase_beta, self._joint_names
-            )
-            self._phase_beta[:, index_list] = torch.tensor(value_list, device=self.device)
+
+        # parse frequency and oscilator amplitude limits
+        if isinstance(cfg.frequency_limit, (float, int)):
+            self._frequency_limit = float(abs(cfg.frequency_limit))
         else:
-            raise ValueError(
-                f"Unsupported phase_beta type: {type(cfg.phase_beta)}. Supported types are float and dict."
-            )
+            raise ValueError(f"Unsupported frequency_limit type: {type(cfg.frequency_limit)}. Supported type is float.")
+        if isinstance(cfg.oscilator_limit, (float, int)):
+            self._oscilator_limit = float(abs(cfg.oscilator_limit))
+        else:
+            raise ValueError(f"Unsupported oscilator_limit type: {type(cfg.oscilator_limit)}. Supported type is float.")
 
     """
     Properties.
@@ -127,7 +137,7 @@ class JointCPGAction(ActionTerm):
 
     @property
     def action_dim(self) -> int:
-        return self._num_joints
+        return 2 * self._num_joints
 
     @property
     def raw_actions(self) -> torch.Tensor:
@@ -144,21 +154,66 @@ class JointCPGAction(ActionTerm):
     def process_actions(self, actions: torch.Tensor):
         # store the raw actions
         self._raw_actions[:] = actions
-        # update time elapsed
-        self._time_elapsed += self._control_period
-
-        # apply the affine transformations
-        self._processed_actions = self._offset + self._scale * self._raw_actions * torch.cos(
-            self._frequency_omega * self._time_elapsed + self._phase_beta
-        )
+        self._processed_actions = self._step_cpg(actions)
 
     def reset(self, env_ids: Sequence[int] | None = None) -> None:
         self._raw_actions[env_ids] = 0.0
-        self._time_elapsed[env_ids] = 0.0
+
+        self._amplitude_r[env_ids] = 0.0
+        self._amplitude_dr[env_ids] = 0.0
+        self._amplitude_d2r[env_ids] = 0.0
+
+        self._phase_theta[env_ids] = 0.0
+        self._phase_dtheta[env_ids] = 0.0
 
     def apply_actions(self):
         # set position targets
         self._asset.set_joint_position_target(self.processed_actions, joint_ids=self._joint_ids)
+
+    # Used by cpg_states observation
+    def get_cpg_states(self) -> torch.Tensor:
+        return torch.concatenate(
+            [
+                self._amplitude_r,
+                self._amplitude_dr,
+                self._phase_theta,
+                self._phase_dtheta,
+            ],
+            dim=1,
+        )
+
+    """
+    Helper functions
+    """
+
+    def _step_cpg(self, actions: torch.Tensor) -> torch.Tensor:
+        dt = self._control_period
+
+        if self._oscilator_limit < torch.inf:
+            self._amplitude_mu = self._oscilator_limit * torch.tanh(actions[:, :12] / self._oscilator_limit)
+        else:
+            self._amplitude_mu = actions[:, :12]
+
+        if self._frequency_limit < torch.inf:
+            self._frequency_omega = (
+                2.0 * torch.pi * self._frequency_limit * torch.sigmoid(actions[:, 12:24] / self._frequency_limit)
+            )
+        else:
+            self._frequency_omega = 2.0 * torch.pi * actions[:, 12:]
+
+        self._amplitude_d2r = self._convergence_factor_a * (
+            self._convergence_factor_a / 4.0 * (self._amplitude_mu - self._amplitude_r) - self._amplitude_dr
+        )
+        self._amplitude_dr += self._amplitude_d2r * dt
+
+        self._phase_dtheta[:] = self._frequency_omega[:]
+
+        self._amplitude_r += self._amplitude_dr * dt
+        self._phase_theta += self._phase_dtheta * dt
+
+        self._phase_theta %= 2 * torch.pi
+
+        return self._offset + self._scale * self._amplitude_r * torch.cos(self._phase_theta + self._phase_offset)
 
 
 class QuadrupedIKAction(ActionTerm):
@@ -345,8 +400,10 @@ class QuadrupedCPGAction(QuadrupedIKAction):
     cfg: actions_cfg.QuadrupedCPGActionCfg
     """The configuration of the action term."""
 
-    _frequency_limit: float
-    """The limit of frequency applied to the input action to generate CPG signal."""
+    _swing_frequency_limit: float
+    """The limit of swing frequency applied to the input action to generate CPG signal."""
+    _stance_frequency_limit: float
+    """The limit of swing frequency applied to the input action to generate CPG signal."""
     _oscilator_limit: float
     """The limit of the oscilator amplitude applied to the input action to generate CPG signal."""
 
@@ -376,12 +433,16 @@ class QuadrupedCPGAction(QuadrupedIKAction):
         # CPG variables
         self._convergence_factor_a = 50.0
         self._coupling_weight = torch.ones(env.num_envs, 1, device=self.device)
-        self._amplitude_mu = torch.ones(env.num_envs, 4, 2, device=self.device)
+        self._amplitude_mu = torch.ones(env.num_envs, 4, device=self.device)
+        self._swing_frequency = torch.zeros(env.num_envs, 1, device=self.device)
+        self._stance_frequency = torch.zeros(env.num_envs, 1, device=self.device)
         self._frequency_omega = torch.zeros(env.num_envs, 4, device=self.device)
+        self._omnidirectional_offset = torch.zeros(self.num_envs, 1, device=self.device)
+        self._joint_offsets = torch.zeros(self.num_envs, 12, device=self.device)
 
-        self._amplitude_r = torch.randn(env.num_envs, 4, 2, device=self.device)
-        self._amplitude_dr = torch.zeros(env.num_envs, 4, 2, device=self.device)
-        self._amplitude_d2r = torch.zeros(env.num_envs, 4, 2, device=self.device)
+        self._amplitude_r = torch.randn(env.num_envs, 4, device=self.device)
+        self._amplitude_dr = torch.zeros(env.num_envs, 4, device=self.device)
+        self._amplitude_d2r = torch.zeros(env.num_envs, 4, device=self.device)
 
         self._phase_theta = torch.randn(env.num_envs, 4, device=self.device)
         self._phase_dtheta = torch.zeros(env.num_envs, 4, device=self.device)
@@ -389,10 +450,18 @@ class QuadrupedCPGAction(QuadrupedIKAction):
         self._control_period = env.sim.cfg.dt * env.cfg.decimation
 
         # parse frequency and oscilator amplitude limits
-        if isinstance(cfg.frequency_limit, (float, int)):
-            self._frequency_limit = float(abs(cfg.frequency_limit))
+        if isinstance(cfg.swing_frequency_limit, (float, int)):
+            self._swing_frequency_limit = float(abs(cfg.swing_frequency_limit))
         else:
-            raise ValueError(f"Unsupported frequency_limit type: {type(cfg.frequency_limit)}. Supported type is float.")
+            raise ValueError(
+                f"Unsupported swing_frequency_limit type: {type(cfg.swing_frequency_limit)}. Supported type is float."
+            )
+        if isinstance(cfg.stance_frequency_limit, (float, int)):
+            self._stance_frequency_limit = float(abs(cfg.stance_frequency_limit))
+        else:
+            raise ValueError(
+                f"Unsupported stance_frequency_limit type: {type(cfg.stance_frequency_limit)}. Supported type is float."
+            )
         if isinstance(cfg.oscilator_limit, (float, int)):
             self._oscilator_limit = float(abs(cfg.oscilator_limit))
         else:
@@ -434,7 +503,7 @@ class QuadrupedCPGAction(QuadrupedIKAction):
 
     @property
     def action_dim(self) -> int:
-        return 13  # amplitude_mu_x, amplitude_mu_y, and frequency for each foot and coupling weight
+        return 20  # amplitude_mu for each foot, swing and stance frequencies, coupling weight and omnidirectional phase
 
     @property
     def raw_actions(self) -> torch.Tensor:
@@ -456,13 +525,19 @@ class QuadrupedCPGAction(QuadrupedIKAction):
 
         super().process_actions(cpg_processed_action)
 
+        self._joint_offsets = actions[:, 8:]
+        self._processed_actions += 0.05 * self._joint_offsets
+
     def reset(self, env_ids: Sequence[int] | None = None) -> None:
         super().reset(env_ids)
         self._raw_actions_cpg[env_ids] = 0.0
 
         num_resets = len(env_ids) if env_ids is not None else 0
 
-        self._amplitude_r[env_ids] = torch.randn(num_resets, 4, 2, device=self.device)
+        self._swing_frequency[env_ids] = 0.0
+        self._stance_frequency[env_ids] = 0.0
+
+        self._amplitude_r[env_ids] = torch.randn(num_resets, 4, device=self.device)
         self._amplitude_dr[env_ids] = 0.0
         self._amplitude_d2r[env_ids] = 0.0
 
@@ -517,8 +592,8 @@ class QuadrupedCPGAction(QuadrupedIKAction):
     def get_cpg_states(self) -> torch.Tensor:
         return torch.concatenate(
             [
-                *(amp_r.squeeze(2) for amp_r in self._amplitude_r.split(1, dim=2)),
-                *(amp_dr.squeeze(2) for amp_dr in self._amplitude_r.split(1, dim=2)),
+                self._amplitude_r,
+                self._amplitude_dr,
                 self._phase_theta,
                 self._phase_dtheta,
             ],
@@ -533,31 +608,43 @@ class QuadrupedCPGAction(QuadrupedIKAction):
         dt = self._control_period
 
         if self._oscilator_limit < torch.inf:
-            self._amplitude_mu[:, :, 0] = self._oscilator_limit * torch.sigmoid(actions[:, :4] / self._oscilator_limit)
-            self._amplitude_mu[:, :, 1] = self._oscilator_limit * torch.sigmoid(actions[:, 4:8] / self._oscilator_limit)
+            self._amplitude_mu = 0.5 + self._oscilator_limit * torch.sigmoid(actions[:, :4] / self._oscilator_limit)
         else:
-            self._amplitude_mu[:, :, 0] = actions[:, :4]
-            self._amplitude_mu[:, :, 1] = actions[:, 4:8]
+            self._amplitude_mu = actions[:, :4]
 
-        if self._frequency_limit < torch.inf:
-            self._frequency_omega = (
-                2.0 * torch.pi * self._frequency_limit * torch.sigmoid(actions[:, 8:12] / self._frequency_limit)
+        self._omnidirectional_offset[:, 0] = actions[:, 4]
+
+        if self._swing_frequency_limit < torch.inf:
+            self._swing_frequency[:, 0] = self._swing_frequency_limit * torch.sigmoid(
+                actions[:, 5] / self._swing_frequency_limit
             )
         else:
-            self._frequency_omega = 2.0 * torch.pi * actions[8:12]
+            self._swing_frequency[:, 0] = actions[:, 5]
 
-        self._coupling_weight = torch.sigmoid(actions[:, 12]).unsqueeze(1)
+        if self._stance_frequency_limit < torch.inf:
+            self._stance_frequency[:, 0] = self._stance_frequency_limit * torch.sigmoid(
+                actions[:, 6] / self._stance_frequency_limit
+            )
+        else:
+            self._stance_frequency[:, 0] = actions[:, 6]
+
+        self._coupling_weight = torch.sigmoid(actions[:, 7]).unsqueeze(1)
 
         self._amplitude_d2r = self._convergence_factor_a * (
             self._convergence_factor_a / 4.0 * (self._amplitude_mu - self._amplitude_r) - self._amplitude_dr
         )
         self._amplitude_dr += self._amplitude_d2r * dt
 
-        self._phase_dtheta[:] = self._frequency_omega[:]
         for i in range(4):
+            self._frequency_omega[:, i] = torch.where(
+                self._phase_theta[:, i] < torch.pi,
+                2.0 * torch.pi * self._swing_frequency[:, 0],
+                2.0 * torch.pi * self._stance_frequency[:, 0],
+            )
+            self._phase_dtheta[:, i] = self._frequency_omega[:, i]
             for j in range(4):
-                self._phase_dtheta[:, i] += 0.5 * (
-                    (self._amplitude_r[:, j, 0] + self._amplitude_r[:, j, 1])
+                self._phase_dtheta[:, i] += (
+                    self._amplitude_r[:, j]
                     * self._coupling_weight[:, 0]
                     * torch.sin(self._phase_theta[:, j] - self._phase_theta[:, i] - self._coupling_matrix[i][j])
                 )
@@ -571,8 +658,18 @@ class QuadrupedCPGAction(QuadrupedIKAction):
             torch.sin(self._phase_theta) > 0, self._ground_clearance, self._ground_penetration
         )
 
-        foot_x = -self._step_size * self._amplitude_r[:, :, 0] * torch.cos(self._phase_theta)
-        foot_y = -self._step_size * self._amplitude_r[:, :, 1] * torch.cos(self._phase_theta)
-        foot_z = ground_multiplier * torch.sin(self._phase_theta)
+        foot_x = (
+            -self._step_size
+            * self._amplitude_r
+            * torch.cos(self._phase_theta)
+            * torch.cos(self._omnidirectional_offset)
+        )
+        foot_y = (
+            -self._step_size
+            * self._amplitude_r
+            * torch.cos(self._phase_theta)
+            * torch.sin(self._omnidirectional_offset)
+        )
+        foot_z = ground_multiplier * torch.sin(self._phase_theta) - self._body_height_offset
 
         return torch.stack([foot_x, foot_y, foot_z], dim=2).reshape(self._env.num_envs, -1)

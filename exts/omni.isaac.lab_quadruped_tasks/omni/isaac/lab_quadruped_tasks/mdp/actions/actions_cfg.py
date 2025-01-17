@@ -34,10 +34,14 @@ class JointCPGActionCfg(JointActionCfg):
     If True, this flag results in overwriting the values of :attr:`offset` to the default joint positions
     from the articulation asset.
     """
-    frequency_omega: float | dict[str, float] = 2 * torch.pi
-    """The frequency for the oscilatory signal action (float or dict of regex expressions). Defaults to 2*pi."""
-    phase_beta: float | dict[str, float] = 0.0
-    """The phase offset for the oscilatory signal action (float or dict of regex expressions). Defaults to 0.0."""
+
+    phase_offset: float | dict[str, float] = 0.0
+    """Phase offset factor for the action (float or dict of regex expressions). Defaults to 0.0."""
+
+    frequency_limit: float = torch.inf
+    """The limit frequency in Hz to use in Central Pattern Generator. Defaults to infinity."""
+    oscilator_limit: float = torch.inf
+    """The limit of the oscilator amplitude to use in Central Pattern Generator. Defaults to infinity."""
 
 
 @configclass
@@ -92,8 +96,10 @@ class QuadrupedCPGActionCfg(QuadrupedIKActionCfg):
 
     class_type: type[ActionTerm] = quadruped_actions.QuadrupedCPGAction
 
-    frequency_limit: float = torch.inf
-    """The limit frequency in Hz to use in Central Pattern Generator. Defaults to infinity."""
+    swing_frequency_limit: float = torch.inf
+    """The limit swing frequency in Hz to use in Central Pattern Generator in swing phase. Defaults to infinity."""
+    stance_frequency_limit: float = torch.inf
+    """The limit stance frequency in Hz to use in Central Pattern Generator in stance phase. Defaults to infinity."""
     oscilator_limit: float = torch.inf
     """The limit of the oscilator amplitude to use in Central Pattern Generator. Defaults to infinity."""
 
