@@ -7,11 +7,17 @@ X.0.0 (Unreleased)
 Added
 ^^^^^
 
+* Add ``physics_material`` and ``change_actuator_gains`` event terms
 * Create new `partial_action_l2` reward term
 * Create new `time_sine_cossine` observation term
 * Create new `change_gait_type` event term
 * Create new actions for quadruped robots - `JointCPGAction`, `QuadrupedIKAction` and `QuadrupedCPGAction`
 
+Changed
+^^^^^
+
+* Change ``add_base_mass`` to scale the robot mass
+* Change simulation frequency to 400 Hz
 
 4.0.0 (2025-01-06)
 ~~~~~~~~~~~~~~~~~~
@@ -29,7 +35,7 @@ Changed
 * Update pre-trained models for all tasks and robots
 * Update for Isaac Lab 1.4.0
 * Update reward terms weights
-* Use only one ``ROUGH_TERRAINS_CFG`` for all robots
+* Use only one `ROUGH_TERRAINS_CFG` for all robots
 * Change simulation frequency to 200 Hz
 * Change ``robots/unitree_go2`` folder to just ``go2``
 * Use the same reward terms and weights for all tasks

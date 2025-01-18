@@ -16,6 +16,7 @@ from omni.isaac.lab.managers import ObservationTermCfg as ObsTerm
 from omni.isaac.lab.managers import RewardTermCfg as RewTerm
 from omni.isaac.lab.managers import TerminationTermCfg as DoneTerm
 from omni.isaac.lab.managers import CurriculumTermCfg as CurrTerm
+from omni.isaac.lab.managers import ActionTermCfg
 from omni.isaac.lab.managers import SceneEntityCfg
 from omni.isaac.lab.scene import InteractiveSceneCfg
 from omni.isaac.lab.sensors import ContactSensorCfg, RayCasterCfg, patterns
@@ -67,7 +68,7 @@ class QuadrupedSceneCfg(InteractiveSceneCfg):
         ),
     )
 
-    # quadruped robot
+    # the quadruped robot is defined in the base class of each robot
     robot: ArticulationCfg = MISSING
 
     # contact sensors
@@ -115,34 +116,8 @@ class CommandsCfg:
 class ActionsCfg:
     """Action specifications for the MDP"""
 
-    # joint_pos = mdp.JointPositionActionCfg(asset_name="robot", joint_names=[".*"], scale=0.5, use_default_offset=True)
-
-    cpg_action = mdp.QuadrupedCPGActionCfg(
-        asset_name="robot",
-        # IK Parameters
-        front_left_joints=["FL_.*"],
-        front_right_joints=["FR_.*"],
-        rear_left_joints=["RL_.*"],
-        rear_right_joints=["RR_.*"],
-        hip_length=0.0955,
-        thigh_length=0.2130,
-        calf_length=0.2130,
-        foot_offset_x=0.0,
-        foot_offset_y=0.0955,
-        foot_offset_z=-0.3012,
-        # CPG Parameters
-        swing_frequency_limit=5.0,
-        stance_frequency_limit=3.0,
-        oscilator_limit=(0.5, 2.0),
-        step_size=0.1,
-        ground_clearance=0.1,
-        ground_penetration=0.01,
-        body_height_offset=0.0,
-        use_joints_offset=True,
-        joints_offset_scale=0.05,
-        gait_type="trot",
-    )
-    # TODO: Remove from tasks
+    # the action is defined in the base class of each environment type
+    action: ActionTermCfg = MISSING
 
 
 @configclass
@@ -172,7 +147,7 @@ class ObservarionsCfg:
         )
 
         # cpg state
-        cpg_state = ObsTerm(func=mdp.cpg_states, params={"cpg_action_name": "cpg_action"})
+        cpg_state = ObsTerm(func=mdp.cpg_states, params={"cpg_action_name": "action"})
         # TODO: Remove from tasks
 
         # last action
@@ -225,8 +200,8 @@ class EventsCfg:
         mode="startup",
         params={
             "asset_cfg": SceneEntityCfg("robot", joint_names=".*"),
-            "stiffness_distribution_params": (25.0, 125.0),
-            "damping_distribution_params": (0.5, 2.5),
+            "stiffness_distribution_params": (75.0, 125.0),
+            "damping_distribution_params": (1.5, 2.5),
             "operation": "abs",
             "distribution": "uniform",
         },
@@ -258,9 +233,9 @@ class EventsCfg:
         },
     )
 
-    # change_gait = EventTerm(
-    #     func=mdp.change_gait_type, mode="reset", params={"action_name": "cpg_action", "gaits": ["walk", "trot", "pace"]}
-    # )
+    change_gait = EventTerm(
+        func=mdp.change_gait_type, mode="reset", params={"action_name": "action", "gaits": ["walk", "trot", "pace"]}
+    )
 
     change_vel_cmd = EventTerm(func=mdp.invert_vel_cmd, mode="reset", params={"command_name": "base_velocity"})
 

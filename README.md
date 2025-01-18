@@ -52,13 +52,13 @@ The following arguments are optional, but can be used to specify the training co
 
 If you want to enable video clips recording during training, you can include the following arguments, along with `--enable_cameras` and `--video` flags:
 
-- `--video_length` - Length of each recorded video, in steps (default is `400`)
-- `--video_interval` - Interval between each video recording, in steps (default is `24000`)
+- `--video_length` - Length of each recorded video, in steps (default is `480`)
+- `--video_interval` - Interval between each video recording, in steps (default is `12000`)
 
 The entire command would be something like:
 
 ```bash
-$ python scripts/rsl_rl/train.py --task Isaac-Quadruped-Go2-Blind-Flat-v0 --num_envs 1024 --max_iterations 8000 --save_interval 500 --seed 42 --headless --enable_cameras --video --video_length 400 --video_interval 24000
+$ python scripts/rsl_rl/train.py --task Isaac-Quadruped-Go2-Blind-Flat-v0 --num_envs 1024 --max_iterations 8000 --save_interval 500 --seed 42 --headless --enable_cameras --video --video_length 480 --video_interval 12000
 ```
 
 To resume the training from a checkpoint, you can set the `--resume` to `True` and specify the run directory and checkpoint.  
