@@ -43,6 +43,7 @@ class Go2JointsBaseEnvCfg(base_envs.QuadrupedJointsEnvCfg):
         self.rewards.pen_joint_powers.weight = -3e-3
         self.rewards.pen_joint_deviation.weight = -0.1
         self.rewards.pen_undesired_contacts.weight = -0.25
+        self.rewards.pen_offset_joints = None
 
 
 @configclass

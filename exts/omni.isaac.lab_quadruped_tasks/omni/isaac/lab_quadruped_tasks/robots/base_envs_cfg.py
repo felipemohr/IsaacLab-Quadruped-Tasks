@@ -30,6 +30,8 @@ class QuadrupedJointsEnvCfg(QuadrupedEnvCfg):
             asset_name="robot", joint_names=[".*"], scale=0.5, use_default_offset=True
         )
 
+        self.rewards.pen_offset_joints = None
+
         self.observations.policy.feet_contact = None
         self.observations.policy.cpg_state = None
 
@@ -61,13 +63,13 @@ class QuadrupedCPGEnvCfg(QuadrupedEnvCfg):
         self.actions.action = mdp.QuadrupedCPGActionCfg(
             asset_name="robot",
             # IK Parameters
-            front_left_joints=["fl_.*"],
-            front_right_joints=["fr_.*"],
-            rear_left_joints=["hl_.*"],
-            rear_right_joints=["hr_.*"],
+            front_left_joints=["FL_.*"],
+            front_right_joints=["FR_.*"],
+            rear_left_joints=["RL_.*"],
+            rear_right_joints=["RR_.*"],
             hip_length=0.0955,  # 0.11095
             thigh_length=0.2130,  # 0.3215
-            calf_length=0.2130,  # -0.3365
+            calf_length=0.2130,  # 0.3365
             foot_offset_x=0.0,
             foot_offset_y=0.0955,
             foot_offset_z=-0.3012,

@@ -148,7 +148,6 @@ class ObservarionsCfg:
 
         # cpg state
         cpg_state = ObsTerm(func=mdp.cpg_states, params={"cpg_action_name": "action"})
-        # TODO: Remove from tasks
 
         # last action
         last_action = ObsTerm(func=mdp.last_action)
