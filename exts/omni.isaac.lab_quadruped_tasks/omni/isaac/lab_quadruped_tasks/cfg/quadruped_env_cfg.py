@@ -117,30 +117,6 @@ class ActionsCfg:
 
     # joint_pos = mdp.JointPositionActionCfg(asset_name="robot", joint_names=[".*"], scale=0.5, use_default_offset=True)
 
-    # ik_action = mdp.QuadrupedIKActionCfg(
-    # asset_name="robot",
-    # front_left_joints=["FL_.*"],
-    # front_right_joints=["FR_.*"],
-    # rear_left_joints=["RL_.*"],
-    # rear_right_joints=["RR_.*"],
-    # hip_length=0.0955,
-    # thigh_length=0.2130,
-    # calf_length=0.2130,
-    # foot_offset_x=0.0,
-    # foot_offset_y=0.0955,
-    # foot_offset_z=-0.3012,
-    # )
-
-    # cpg_action = mdp.JointCPGActionCfg(
-    #     asset_name="robot",
-    #     joint_names=[".*"],
-    #     phase_offset={"FL_.*": 0.0, "FR_.*": 3.14, "RL_.*": 3.14, "RR_.*": 0.0},
-    #     scale=0.2,
-    #     use_default_offset=True,
-    #     frequency_limit=4.0,
-    #     oscilator_limit=2.0,
-    # )
-
     cpg_action = mdp.QuadrupedCPGActionCfg(
         asset_name="robot",
         # IK Parameters
@@ -157,11 +133,13 @@ class ActionsCfg:
         # CPG Parameters
         swing_frequency_limit=5.0,
         stance_frequency_limit=3.0,
-        oscilator_limit=1.5,
+        oscilator_limit=(0.5, 2.0),
         step_size=0.1,
         ground_clearance=0.1,
         ground_penetration=0.01,
         body_height_offset=0.0,
+        use_joints_offset=True,
+        joints_offset_scale=0.05,
         gait_type="trot",
     )
     # TODO: Remove from tasks
@@ -195,9 +173,6 @@ class ObservarionsCfg:
 
         # cpg state
         cpg_state = ObsTerm(func=mdp.cpg_states, params={"cpg_action_name": "cpg_action"})
-
-        # time measurements
-        # time_sine_cossine = ObsTerm(func=mdp.time_sine_cossine, noise=None)
         # TODO: Remove from tasks
 
         # last action
@@ -223,13 +198,37 @@ class EventsCfg:
     """Configuration for events"""
 
     # startup
+    physics_material = EventTerm(
+        func=mdp.randomize_rigid_body_material,
+        mode="startup",
+        params={
+            "asset_cfg": SceneEntityCfg("robot", body_names=".*"),
+            "static_friction_range": (0.3, 1.0),
+            "dynamic_friction_range": (0.3, 0.8),
+            "restitution_range": (0.0, 0.0),
+            "num_buckets": 64,
+        },
+    )
+
     add_base_mass = EventTerm(
         func=mdp.randomize_rigid_body_mass,
         mode="startup",
         params={
             "asset_cfg": SceneEntityCfg("robot", body_names="base"),
-            "mass_distribution_params": (-1.0, 2.0),
-            "operation": "add",
+            "mass_distribution_params": (0.9, 1.2),
+            "operation": "scale",
+        },
+    )
+
+    change_actuator_gains = EventTerm(
+        func=mdp.randomize_actuator_gains,
+        mode="startup",
+        params={
+            "asset_cfg": SceneEntityCfg("robot", joint_names=".*"),
+            "stiffness_distribution_params": (25.0, 125.0),
+            "damping_distribution_params": (0.5, 2.5),
+            "operation": "abs",
+            "distribution": "uniform",
         },
     )
 
@@ -259,7 +258,9 @@ class EventsCfg:
         },
     )
 
-    change_gait = EventTerm(func=mdp.change_gait_type, mode="reset", params={"action_name": "cpg_action"})
+    # change_gait = EventTerm(
+    #     func=mdp.change_gait_type, mode="reset", params={"action_name": "cpg_action", "gaits": ["walk", "trot", "pace"]}
+    # )
 
     change_vel_cmd = EventTerm(func=mdp.invert_vel_cmd, mode="reset", params={"command_name": "base_velocity"})
 
@@ -318,8 +319,8 @@ class RewardsCfg:
     pen_joint_accel = RewTerm(func=mdp.joint_acc_l2, weight=-2.5e-7)
     pen_joint_powers = RewTerm(func=mdp.joint_powers_l1, weight=-5e-4)
     pen_flat_orientation = RewTerm(func=mdp.flat_orientation_l2, weight=-5.0)
-
     pen_offset_joints = RewTerm(func=mdp.partial_action_l2, weight=-0.01, params={"first_idx": 8, "last_idx": 20})
+
 
 @configclass
 class TerminationsCfg:

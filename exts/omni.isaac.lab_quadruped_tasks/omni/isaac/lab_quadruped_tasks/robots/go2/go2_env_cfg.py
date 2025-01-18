@@ -89,6 +89,8 @@ class Go2BlindFlatEnvCfg(Go2BaseEnvCfg):
     def __post_init__(self):
         super().__post_init__()
 
+        self.actions.cpg_action.use_joints_offset = False
+
         self.scene.height_scanner = None
         self.observations.policy.height_map = None
 
@@ -100,6 +102,7 @@ class Go2BlindFlatEnvCfg(Go2BaseEnvCfg):
 class Go2BlindFlatEnvCfg_PLAY(Go2BaseEnvCfg_PLAY):
     def __post_init__(self):
         super().__post_init__()
+        self.actions.cpg_action.use_joints_offset = False
 
         self.scene.height_scanner = None
         self.observations.policy.height_map = None
