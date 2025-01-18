@@ -27,7 +27,7 @@ class QuadrupedJointsEnvCfg(QuadrupedEnvCfg):
         super().__post_init__()
 
         self.actions.action = mdp.JointPositionActionCfg(
-            asset_name="robot", joint_names=[".*"], scale=0.5, use_default_offset=True
+            asset_name="robot", joint_names=[".*"], scale=0.2, use_default_offset=True
         )
 
         self.rewards.pen_offset_joints = None
@@ -58,7 +58,6 @@ class QuadrupedCPGEnvCfg(QuadrupedEnvCfg):
         self.rewards.pen_joint_accel = None
         self.rewards.pen_flat_orientation = None
 
-        # TODO: Randomize CPG parameters
         # These parameters are for go2 robot
         self.actions.action = mdp.QuadrupedCPGActionCfg(
             asset_name="robot",
@@ -67,9 +66,9 @@ class QuadrupedCPGEnvCfg(QuadrupedEnvCfg):
             front_right_joints=["FR_.*"],
             rear_left_joints=["RL_.*"],
             rear_right_joints=["RR_.*"],
-            hip_length=0.0955,  # 0.11095
-            thigh_length=0.2130,  # 0.3215
-            calf_length=0.2130,  # 0.3365
+            hip_length=0.0955,
+            thigh_length=0.2130,
+            calf_length=0.2130,
             foot_offset_x=0.0,
             foot_offset_y=0.0955,
             foot_offset_z=-0.3012,

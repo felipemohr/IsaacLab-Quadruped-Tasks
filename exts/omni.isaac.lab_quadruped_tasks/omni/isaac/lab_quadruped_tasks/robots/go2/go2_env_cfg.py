@@ -37,14 +37,6 @@ class Go2JointsBaseEnvCfg(base_envs.QuadrupedJointsEnvCfg):
             ".*calf_joint": -math.pi / 2,
         }
 
-        self.actions.action.scale = 0.2
-
-        self.rewards.rew_feet_air_time.weight = 0.75
-        self.rewards.pen_joint_powers.weight = -3e-3
-        self.rewards.pen_joint_deviation.weight = -0.1
-        self.rewards.pen_undesired_contacts.weight = -0.25
-        self.rewards.pen_offset_joints = None
-
 
 @configclass
 class Go2CPGBaseEnvCfg(base_envs.QuadrupedCPGEnvCfg):
@@ -115,6 +107,7 @@ class Go2CPGBlindFlatEnvCfg(Go2CPGBaseEnvCfg, base_envs.QuadrupedBlindFlatEnvCfg
         Go2CPGBaseEnvCfg.__post_init__(self)
         base_envs.QuadrupedBlindFlatEnvCfg.__post_init__(self)
         self.actions.action.use_joints_offset = False
+        self.rewards.pen_offset_joints = None
 
 
 @configclass
@@ -122,6 +115,8 @@ class Go2CPGBlindRoughEnvCfg(Go2CPGBaseEnvCfg, base_envs.QuadrupedBlindRoughEnvC
     def __post_init__(self):
         Go2CPGBaseEnvCfg.__post_init__(self)
         base_envs.QuadrupedBlindRoughEnvCfg.__post_init__(self)
+        self.events.change_gait = None
+        self.actions.action.gait_type = "walk"
 
 
 @configclass

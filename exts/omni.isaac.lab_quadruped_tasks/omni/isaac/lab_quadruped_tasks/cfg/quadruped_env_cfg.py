@@ -199,9 +199,9 @@ class EventsCfg:
         mode="startup",
         params={
             "asset_cfg": SceneEntityCfg("robot", joint_names=".*"),
-            "stiffness_distribution_params": (75.0, 125.0),
-            "damping_distribution_params": (1.5, 2.5),
-            "operation": "abs",
+            "stiffness_distribution_params": (0.75, 1.25),
+            "damping_distribution_params": (0.75, 1.25),
+            "operation": "scale",
             "distribution": "uniform",
         },
     )
@@ -260,7 +260,7 @@ class RewardsCfg:
     )
     rew_feet_air_time = RewTerm(
         func=mdp.feet_air_time,
-        weight=1.25,
+        weight=0.75,
         params={
             "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*_foot"),
             "command_name": "base_velocity",
@@ -271,12 +271,12 @@ class RewardsCfg:
     # penalizations
     pen_joint_deviation = RewTerm(
         func=mdp.joint_deviation_l1,
-        weight=-0.125,
+        weight=-0.1,
         params={"asset_cfg": SceneEntityCfg("robot", joint_names=[".*"])},
     )
     pen_undesired_contacts = RewTerm(
         func=mdp.undesired_contacts,
-        weight=-1.0,
+        weight=-0.25,
         params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*_thigh"), "threshold": 1.0},
     )
     pen_feet_slide = RewTerm(
@@ -291,7 +291,7 @@ class RewardsCfg:
     pen_ang_vel_xy = RewTerm(func=mdp.ang_vel_xy_l2, weight=-0.1)
     pen_action_rate = RewTerm(func=mdp.action_rate_l2, weight=-0.01)
     pen_joint_accel = RewTerm(func=mdp.joint_acc_l2, weight=-2.5e-7)
-    pen_joint_powers = RewTerm(func=mdp.joint_powers_l1, weight=-5e-4)
+    pen_joint_powers = RewTerm(func=mdp.joint_powers_l1, weight=-3e-3)
     pen_flat_orientation = RewTerm(func=mdp.flat_orientation_l2, weight=-5.0)
     pen_offset_joints = RewTerm(func=mdp.partial_action_l2, weight=-0.01, params={"first_idx": 8, "last_idx": 20})
 
