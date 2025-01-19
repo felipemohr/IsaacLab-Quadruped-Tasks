@@ -68,6 +68,11 @@ class QuadrupedIKActionCfg(ActionTermCfg):
     preserve_order: bool = False
     """Whether to preserve the order of the joint names in the action output. Defaults to False."""
 
+    front_legs_knee: bool = False
+    """Whether the front legs have knees instead of elbows. Defaults to False."""
+    rear_legs_knee: bool = False
+    """Whether the rear legs have knees instead of elbows. Defaults to False."""
+
     hip_length: float = MISSING
     """The length of the hip joint of the quadruped robot."""
     thigh_length: float = MISSING

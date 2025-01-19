@@ -228,6 +228,10 @@ class QuadrupedIKAction(ActionTerm):
     """The configuration of the action term."""
     _asset: Articulation
     """The articulation asset on which the action term is applied."""
+    _front_leg_knees: bool
+    """Whether the front legs have knees or elbows, used to compute inverse kinematics."""
+    _rear_leg_knees: bool
+    """Whether the rear legs have knees or elbows, used to compute inverse kinematics."""
     _leg_dimensions: dict[str, float]
     """The leg dimensions of the quadruped used to compute inverse kinematics."""
     _foot_offsets: dict[str, float]
@@ -273,6 +277,16 @@ class QuadrupedIKAction(ActionTerm):
         # used to avoid sending NaN values to the joints
         self._last_processed_actions = torch.zeros_like(self._processed_actions)
 
+        # parse legs configuration
+        if isinstance(cfg.front_legs_knee, bool):
+            self._front_leg_knees = bool(cfg.front_legs_knee)
+        else:
+            raise ValueError(f"Unsupported front_legs_knee type: {type(cfg.front_legs_knee)}. Supported type is bool.")
+        if isinstance(cfg.rear_legs_knee, bool):
+            self._rear_leg_knees = bool(cfg.rear_legs_knee)
+        else:
+            raise ValueError(f"Unsupported rear_legs_knee type: {type(cfg.rear_legs_knee)}. Supported type is bool.")
+        
         # parse leg dimensions
         self._leg_dimensions = dict()
         if isinstance(cfg.hip_length, (float, int)):
@@ -342,10 +356,10 @@ class QuadrupedIKAction(ActionTerm):
         # store the raw actions
         self._raw_actions[:] = actions
 
-        front_left_action = self._compute_leg_ik(self._raw_actions[:, :3], True)
-        front_right_action = self._compute_leg_ik(self._raw_actions[:, 3:6], False)
-        rear_left_action = self._compute_leg_ik(self._raw_actions[:, 6:9], True)
-        rear_right_action = self._compute_leg_ik(self._raw_actions[:, 9:], False)
+        front_left_action = self._compute_leg_ik(self._raw_actions[:, :3], True, self._front_leg_knees)
+        front_right_action = self._compute_leg_ik(self._raw_actions[:, 3:6], False, self._front_leg_knees)
+        rear_left_action = self._compute_leg_ik(self._raw_actions[:, 6:9], True, self._rear_leg_knees)
+        rear_right_action = self._compute_leg_ik(self._raw_actions[:, 9:], False, self._rear_leg_knees)
 
         self._processed_actions = torch.concatenate(
             [front_left_action, front_right_action, rear_left_action, rear_right_action], dim=1
@@ -371,10 +385,11 @@ class QuadrupedIKAction(ActionTerm):
     Helper functions.
     """
 
-    def _compute_leg_ik(self, foot_action: torch.Tensor, is_left: bool = False) -> torch.Tensor:
+    def _compute_leg_ik(self, foot_action: torch.Tensor, is_left: bool = False, is_knee = False) -> torch.Tensor:
         L1, L2, L3 = self._leg_dimensions["L1"], self._leg_dimensions["L2"], self._leg_dimensions["L3"]
         max_x, max_y, max_z = self._action_limits["x"], self._action_limits["y"], self._action_limits["z"]
         reflect = 1.0 if is_left else -1.0
+        invert = -1.0 if is_knee else 1.0
 
         x, y, z = foot_action.T
         if max_x < torch.inf:
@@ -393,8 +408,8 @@ class QuadrupedIKAction(ActionTerm):
         B = (a**2 + x**2 - L2**2 - L3**2) / (2 * L2 * L3)
 
         theta1 = torch.atan2(y, -z) - torch.atan2(torch.tensor([reflect * L1], device=self.device), a)
-        theta2 = math.pi / 2 - torch.atan2(a, x) - torch.atan2(torch.sqrt(1.0 - A**2), A)
-        theta3 = torch.atan2(torch.sqrt(1.0 - B**2), B)
+        theta2 = invert * (math.pi / 2 - torch.atan2(a, x) - torch.atan2(torch.sqrt(1.0 - A**2), A))
+        theta3 = invert * torch.atan2(torch.sqrt(1.0 - B**2), B)
 
         return torch.concatenate([theta1.unsqueeze(1), -theta2.unsqueeze(1), -theta3.unsqueeze(1)], dim=1)
 
@@ -598,8 +613,8 @@ class QuadrupedCPGAction(QuadrupedIKAction):
 
         super().process_actions(cpg_processed_action)
 
-        self._joint_offsets = actions[:, 8:]
         if self._use_joints_offset:
+            self._joint_offsets = actions[:, 8:]
             self._processed_actions += self._joints_offset_scale * self._joint_offsets
 
     def reset(self, env_ids: Sequence[int] | None = None) -> None:
