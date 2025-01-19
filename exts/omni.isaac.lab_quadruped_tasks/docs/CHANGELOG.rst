@@ -12,12 +12,16 @@ Added
 * Create new `time_sine_cossine` observation term
 * Create new `change_gait_type` event term
 * Create new actions for quadruped robots - `JointCPGAction`, `QuadrupedIKAction` and `QuadrupedCPGAction`
+* Create `base_envs_cfg.py`
+* Create new tasks for ``go2``, ``anymal_d`` and ``spot`` using CPG
+
 
 Changed
 ^^^^^
 
 * Change ``add_base_mass`` to scale the robot mass
 * Change simulation frequency to 400 Hz
+* Refactor quadruped tasks
 
 4.0.0 (2025-01-06)
 ~~~~~~~~~~~~~~~~~~
