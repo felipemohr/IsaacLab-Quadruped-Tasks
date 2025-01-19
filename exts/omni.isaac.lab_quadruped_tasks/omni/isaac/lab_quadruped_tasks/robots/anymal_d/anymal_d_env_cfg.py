@@ -6,7 +6,6 @@ Copyright (c) 2024, Felipe Mohr Santos
 from omni.isaac.lab.utils import configclass
 
 from omni.isaac.lab_quadruped_tasks.robots import base_envs_cfg as base_envs
-from omni.isaac.lab_quadruped_tasks.cfg.quadruped_env_cfg import QuadrupedEnvCfg
 from omni.isaac.lab_quadruped_tasks.cfg.quadruped_terrains_cfg import (
     ROUGH_TERRAINS_CFG,
     ROUGH_TERRAINS_PLAY_CFG,
@@ -16,7 +15,7 @@ from omni.isaac.lab_quadruped_tasks.cfg.quadruped_terrains_cfg import (
     FULL_TERRAINS_PLAY_CFG,
 )
 
-from omni.isaac.lab_assets.anymal import ANYMAL_D_CFG
+from omni.isaac.lab_assets.anymal import ANYMAL_D_CFG, ANYDRIVE_3_SIMPLE_ACTUATOR_CFG
 
 import math
 
@@ -43,8 +42,6 @@ class AnymalDJointsBaseEnvCfg(base_envs.QuadrupedJointsEnvCfg):
 
         self.actions.action.scale = 0.5
 
-        self.events.change_actuator_gains = None
-
         self.rewards.rew_feet_air_time.weight = 1.25
         self.rewards.pen_joint_deviation.weight = -0.125
         self.rewards.pen_undesired_contacts.weight = -1.0
@@ -58,36 +55,35 @@ class AnymalDCPGBaseEnvCfg(base_envs.QuadrupedCPGEnvCfg):
         super().__post_init__()
 
         self.scene.robot = ANYMAL_D_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
+        self.scene.robot.actuators["legs"] = ANYDRIVE_3_SIMPLE_ACTUATOR_CFG
+        self.scene.robot.actuators["legs"].stiffness = 100.0
+        self.scene.robot.actuators["legs"].damping = 2.0
+
         if self.scene.height_scanner is not None:
             self.scene.height_scanner.prim_path = "{ENV_REGEX_NS}/Robot/body"
-        self.scene.robot.init_state.joint_pos = {
-            ".*hx": 0.0,
-            ".*hy": math.pi / 4,
-            ".*kn": -math.pi / 2,
-        }
-
-        if self.events.add_base_mass is not None:
-            self.events.add_base_mass.params["asset_cfg"].body_names = "body"
-        if self.terminations.base_contact is not None:
-            self.terminations.base_contact.params["sensor_cfg"].body_names = "body"
+        if self.observations.policy.feet_contact is not None:
+            self.observations.policy.feet_contact.params["sensor_cfg"].body_names = ".*_FOOT"
+        if self.rewards.rew_feet_air_time is not None:
+            self.rewards.rew_feet_air_time.params["sensor_cfg"].body_names = ".*_FOOT"
+        if self.rewards.pen_feet_slide is not None:
+            self.rewards.pen_feet_slide.params["sensor_cfg"].body_names = ".*_FOOT"
+            self.rewards.pen_feet_slide.params["asset_cfg"].body_names = ".*_FOOT"
         if self.rewards.pen_undesired_contacts is not None:
-            self.rewards.pen_undesired_contacts.params["sensor_cfg"].body_names = ".*_uleg"
+            self.rewards.pen_undesired_contacts.params["sensor_cfg"].body_names = ".*_THIGH"
 
-        # TODO: Fix parameters and QuadrupedIKAction for anymal
-        self.actions.action.front_left_joints = ["fl_.*"]
-        self.actions.action.front_right_joints = ["fr_.*"]
-        self.actions.action.rear_left_joints = ["hl_.*"]
-        self.actions.action.rear_right_joints = ["hr_.*"]
-        self.actions.action.hip_length = 0.11095
-        self.actions.action.thigh_length = 0.3215
-        self.actions.action.calf_length = 0.3365
-        self.actions.action.foot_offset_x = 0.0
-        self.actions.action.foot_offset_y = 0.11095
-        self.actions.action.foot_offset_z = -0.465
-        self.actions.action.step_size = 0.15
-
-        self.events.change_gait = None
-        self.events.change_actuator_gains = None
+        self.actions.action.front_left_joints = ["LF_.*"]
+        self.actions.action.front_right_joints = ["RF_.*"]
+        self.actions.action.rear_left_joints = ["LH_.*"]
+        self.actions.action.rear_right_joints = ["RH_.*"]
+        self.actions.action.front_legs_knee = False
+        self.actions.action.rear_legs_knee = True
+        self.actions.action.hip_length = 0.069
+        self.actions.action.thigh_length = 0.3374
+        self.actions.action.calf_length = 0.4056
+        self.actions.action.foot_offset_x = -0.1
+        self.actions.action.foot_offset_y = 0.0
+        self.actions.action.foot_offset_z = -0.6
+        self.actions.action.step_size = 0.2
 
 
 #########################
@@ -149,7 +145,6 @@ class AnymalDCPGBlindRoughEnvCfg(AnymalDCPGBaseEnvCfg, base_envs.QuadrupedBlindR
         AnymalDCPGBaseEnvCfg.__post_init__(self)
         base_envs.QuadrupedBlindRoughEnvCfg.__post_init__(self)
         self.events.change_gait = None
-        self.actions.action.gait_type = "walk"
 
 
 @configclass
@@ -157,6 +152,8 @@ class AnymalDCPGBlindStairsEnvCfg(AnymalDCPGBaseEnvCfg, base_envs.QuadrupedBlind
     def __post_init__(self):
         AnymalDCPGBaseEnvCfg.__post_init__(self)
         base_envs.QuadrupedBlindStairsEnvCfg.__post_init__(self)
+        self.events.change_gait = None
+        self.actions.action.gait_type = "walk"
 
 
 @configclass
@@ -164,9 +161,12 @@ class AnymalDCPGVisionEnvCfg(AnymalDCPGBaseEnvCfg, base_envs.QuadrupedVisionEnvC
     def __post_init__(self):
         AnymalDCPGBaseEnvCfg.__post_init__(self)
         base_envs.QuadrupedVisionEnvCfg.__post_init__(self)
+        self.events.change_gait = None
 
 
 class AnymalDCPGVisionStairsEnvCfg(AnymalDCPGBaseEnvCfg, base_envs.QuadrupedVisionStairsEnvCfg):
     def __post_init__(self):
         AnymalDCPGBaseEnvCfg.__post_init__(self)
         base_envs.QuadrupedVisionStairsEnvCfg.__post_init__(self)
+        self.events.change_gait = None
+        self.actions.action.gait_type = "walk"

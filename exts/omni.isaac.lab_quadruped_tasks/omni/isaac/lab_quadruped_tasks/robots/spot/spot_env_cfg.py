@@ -6,7 +6,6 @@ Copyright (c) 2024, Felipe Mohr Santos
 from omni.isaac.lab.utils import configclass
 
 from omni.isaac.lab_quadruped_tasks.robots import base_envs_cfg as base_envs
-from omni.isaac.lab_quadruped_tasks.cfg.quadruped_env_cfg import QuadrupedEnvCfg
 from omni.isaac.lab_quadruped_tasks.cfg.quadruped_terrains_cfg import (
     ROUGH_TERRAINS_CFG,
     ROUGH_TERRAINS_PLAY_CFG,
@@ -43,8 +42,6 @@ class SpotJointsBaseEnvCfg(base_envs.QuadrupedJointsEnvCfg):
 
         self.actions.action.scale = 0.2
 
-        self.events.change_actuator_gains = None
-
         self.rewards.rew_feet_air_time.weight = 0.25
         self.rewards.pen_undesired_contacts.weight = -1.0
         self.rewards.pen_feet_slide.weight = -0.025
@@ -58,14 +55,9 @@ class SpotCPGBaseEnvCfg(base_envs.QuadrupedCPGEnvCfg):
         super().__post_init__()
 
         self.scene.robot = SPOT_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
-        self.scene.robot.init_state.joint_pos = {
-            ".*hx": 0.0,
-            ".*hy": math.pi / 4,
-            ".*kn": -math.pi / 2,
-        }
-        self.scene.robot.actuators["spot_hip"].stiffness = 160.0
+        self.scene.robot.actuators["spot_hip"].stiffness = 100.0
         self.scene.robot.actuators["spot_hip"].damping = 2.0
-        self.scene.robot.actuators["spot_knee"].stiffness = 160.0
+        self.scene.robot.actuators["spot_knee"].stiffness = 100.0
         self.scene.robot.actuators["spot_knee"].damping = 2.0
 
         if self.scene.height_scanner is not None:
@@ -84,13 +76,10 @@ class SpotCPGBaseEnvCfg(base_envs.QuadrupedCPGEnvCfg):
         self.actions.action.hip_length = 0.11095
         self.actions.action.thigh_length = 0.3215
         self.actions.action.calf_length = 0.3365
-        self.actions.action.foot_offset_x = -0.05
+        self.actions.action.foot_offset_x = -0.1
         self.actions.action.foot_offset_y = 0.11095
         self.actions.action.foot_offset_z = -0.465
-        self.actions.action.step_size = 0.15
-
-        self.events.change_gait = None
-        self.events.change_actuator_gains = None
+        self.actions.action.step_size = 0.2
 
 
 #########################
@@ -152,7 +141,6 @@ class SpotCPGBlindRoughEnvCfg(SpotCPGBaseEnvCfg, base_envs.QuadrupedBlindRoughEn
         SpotCPGBaseEnvCfg.__post_init__(self)
         base_envs.QuadrupedBlindRoughEnvCfg.__post_init__(self)
         self.events.change_gait = None
-        self.actions.action.gait_type = "walk"
 
 
 @configclass
@@ -160,16 +148,20 @@ class SpotCPGBlindStairsEnvCfg(SpotCPGBaseEnvCfg, base_envs.QuadrupedBlindStairs
     def __post_init__(self):
         SpotCPGBaseEnvCfg.__post_init__(self)
         base_envs.QuadrupedBlindStairsEnvCfg.__post_init__(self)
-
+        self.events.change_gait = None
+        self.actions.action.gait_type = "walk"
 
 @configclass
 class SpotCPGVisionEnvCfg(SpotCPGBaseEnvCfg, base_envs.QuadrupedVisionEnvCfg):
     def __post_init__(self):
         SpotCPGBaseEnvCfg.__post_init__(self)
         base_envs.QuadrupedVisionEnvCfg.__post_init__(self)
+        self.events.change_gait = None
 
 
 class SpotCPGVisionStairsEnvCfg(SpotCPGBaseEnvCfg, base_envs.QuadrupedVisionStairsEnvCfg):
     def __post_init__(self):
         SpotCPGBaseEnvCfg.__post_init__(self)
         base_envs.QuadrupedVisionStairsEnvCfg.__post_init__(self)
+        self.events.change_gait = None
+        self.actions.action.gait_type = "walk"

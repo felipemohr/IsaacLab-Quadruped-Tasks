@@ -6,7 +6,6 @@ Copyright (c) 2024, Felipe Mohr Santos
 from omni.isaac.lab.utils import configclass
 
 from omni.isaac.lab_quadruped_tasks.robots import base_envs_cfg as base_envs
-from omni.isaac.lab_quadruped_tasks.cfg.quadruped_env_cfg import QuadrupedEnvCfg
 from omni.isaac.lab_quadruped_tasks.cfg.quadruped_terrains_cfg import (
     ROUGH_TERRAINS_CFG,
     ROUGH_TERRAINS_PLAY_CFG,
@@ -44,17 +43,8 @@ class Go2CPGBaseEnvCfg(base_envs.QuadrupedCPGEnvCfg):
         super().__post_init__()
 
         self.scene.robot = UNITREE_GO2_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
-        self.scene.robot.init_state.joint_pos = {
-            ".*hip_joint": 0.0,
-            ".*thigh_joint": math.pi / 4,
-            ".*calf_joint": -math.pi / 2,
-        }
-        # self.scene.robot.init_state.pos = (0, 0, 0.32)
         self.scene.robot.actuators["base_legs"].stiffness = 100.0
         self.scene.robot.actuators["base_legs"].damping = 2.0
-
-        # self.events.change_gait = None
-        # self.events.change_actuator_gains = None
 
 
 ########################
@@ -116,7 +106,6 @@ class Go2CPGBlindRoughEnvCfg(Go2CPGBaseEnvCfg, base_envs.QuadrupedBlindRoughEnvC
         Go2CPGBaseEnvCfg.__post_init__(self)
         base_envs.QuadrupedBlindRoughEnvCfg.__post_init__(self)
         self.events.change_gait = None
-        self.actions.action.gait_type = "walk"
 
 
 @configclass
@@ -124,6 +113,8 @@ class Go2CPGBlindStairsEnvCfg(Go2CPGBaseEnvCfg, base_envs.QuadrupedBlindStairsEn
     def __post_init__(self):
         Go2CPGBaseEnvCfg.__post_init__(self)
         base_envs.QuadrupedBlindStairsEnvCfg.__post_init__(self)
+        self.events.change_gait = None
+        self.actions.action.gait_type = "walk"
 
 
 @configclass
@@ -131,9 +122,12 @@ class Go2CPGVisionEnvCfg(Go2CPGBaseEnvCfg, base_envs.QuadrupedVisionEnvCfg):
     def __post_init__(self):
         Go2CPGBaseEnvCfg.__post_init__(self)
         base_envs.QuadrupedVisionEnvCfg.__post_init__(self)
+        self.events.change_gait = None
 
 
 class Go2CPGVisionStairsEnvCfg(Go2CPGBaseEnvCfg, base_envs.QuadrupedVisionStairsEnvCfg):
     def __post_init__(self):
         Go2CPGBaseEnvCfg.__post_init__(self)
         base_envs.QuadrupedVisionStairsEnvCfg.__post_init__(self)
+        self.events.change_gait = None
+        self.actions.action.gait_type = "walk"

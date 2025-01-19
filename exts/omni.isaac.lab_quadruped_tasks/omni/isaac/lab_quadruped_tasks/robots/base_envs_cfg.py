@@ -66,6 +66,8 @@ class QuadrupedCPGEnvCfg(QuadrupedEnvCfg):
             front_right_joints=["FR_.*"],
             rear_left_joints=["RL_.*"],
             rear_right_joints=["RR_.*"],
+            front_legs_knee=False,
+            rear_legs_knee=False,
             hip_length=0.0955,
             thigh_length=0.2130,
             calf_length=0.2130,
