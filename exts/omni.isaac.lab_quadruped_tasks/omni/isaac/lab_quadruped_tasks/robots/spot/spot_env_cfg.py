@@ -6,22 +6,12 @@ Copyright (c) 2024, Felipe Mohr Santos
 from omni.isaac.lab.utils import configclass
 
 from omni.isaac.lab_quadruped_tasks.robots import base_envs_cfg as base_envs
-from omni.isaac.lab_quadruped_tasks.cfg.quadruped_terrains_cfg import (
-    ROUGH_TERRAINS_CFG,
-    ROUGH_TERRAINS_PLAY_CFG,
-    STAIRS_TERRAINS_CFG,
-    STAIRS_TERRAINS_PLAY_CFG,
-    FULL_TERRAINS_CFG,
-    FULL_TERRAINS_PLAY_CFG,
-)
 
 from omni.isaac.lab_assets.spot import SPOT_CFG
 
-import math
-
 ########################
 # Spot Base Environments
-#######################
+########################
 
 
 @configclass
@@ -80,11 +70,13 @@ class SpotCPGBaseEnvCfg(base_envs.QuadrupedCPGEnvCfg):
         self.actions.action.foot_offset_y = 0.11095
         self.actions.action.foot_offset_z = -0.465
         self.actions.action.step_size = 0.2
+        self.actions.action.ground_clearance = 0.2
+        self.actions.action.ground_penetration = 0.02
 
 
 #########################
 # Spot Joints Environment
-########################
+#########################
 
 
 @configclass
@@ -123,7 +115,7 @@ class SpotJointsVisionStairsEnvCfg(SpotJointsBaseEnvCfg, base_envs.QuadrupedVisi
 
 ######################
 # Spot CPG Environment
-#####################
+######################
 
 
 @configclass

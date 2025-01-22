@@ -4,17 +4,7 @@ Copyright (c) 2024, Felipe Mohr Santos
 """
 
 from omni.isaac.lab.utils import configclass
-
 from omni.isaac.lab_quadruped_tasks.robots import base_envs_cfg as base_envs
-from omni.isaac.lab_quadruped_tasks.cfg.quadruped_terrains_cfg import (
-    ROUGH_TERRAINS_CFG,
-    ROUGH_TERRAINS_PLAY_CFG,
-    STAIRS_TERRAINS_CFG,
-    STAIRS_TERRAINS_PLAY_CFG,
-    FULL_TERRAINS_CFG,
-    FULL_TERRAINS_PLAY_CFG,
-)
-
 from omni.isaac.lab_assets.unitree import UNITREE_GO2_CFG
 
 import math

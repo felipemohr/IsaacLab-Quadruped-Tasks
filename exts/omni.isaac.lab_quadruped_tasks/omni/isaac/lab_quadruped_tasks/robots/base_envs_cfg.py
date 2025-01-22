@@ -75,6 +75,7 @@ class QuadrupedCPGEnvCfg(QuadrupedEnvCfg):
             foot_offset_y=0.0955,
             foot_offset_z=-0.3012,
             # CPG Parameters
+            convergence_factor=50.0,
             swing_frequency_limit=5.0,
             stance_frequency_limit=3.0,
             oscilator_limit=(0.5, 2.0),
@@ -145,6 +146,7 @@ class QuadrupedBlindRoughEnvCfg(QuadrupedEnvCfg):
         self.scene.terrain.terrain_generator = ROUGH_TERRAINS_CFG
 
         self.viewer.origin_type = "env"
+        self.viewer.env_index = int(self.scene.num_envs / 2)
 
 
 @configclass
@@ -165,6 +167,7 @@ class QuadrupedBlindStairsEnvCfg(QuadrupedEnvCfg):
         self.scene.terrain.terrain_generator = STAIRS_TERRAINS_CFG
 
         self.viewer.origin_type = "env"
+        self.viewer.env_index = int(self.scene.num_envs / 2)
 
 
 ###############################
@@ -183,6 +186,7 @@ class QuadrupedVisionEnvCfg(QuadrupedEnvCfg):
         self.events.change_vel_cmd = None
 
         self.viewer.origin_type = "env"
+        self.viewer.env_index = int(self.scene.num_envs / 2)
 
 
 @configclass
@@ -200,3 +204,4 @@ class QuadrupedVisionStairsEnvCfg(QuadrupedEnvCfg):
         self.scene.terrain.terrain_generator = STAIRS_TERRAINS_CFG
 
         self.viewer.origin_type = "env"
+        self.viewer.env_index = int(self.scene.num_envs / 2)
