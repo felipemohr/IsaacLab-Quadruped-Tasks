@@ -2,8 +2,8 @@
 
 ![image](https://github.com/user-attachments/assets/e2a0a26e-0f06-4eb7-8478-d726585dac94)
 
-[![IsaacSim](https://img.shields.io/badge/IsaacSim-4.2.0-silver.svg)](https://docs.omniverse.nvidia.com/isaacsim/latest/overview.html)
-[![Isaac Lab](https://img.shields.io/badge/IsaacLab-1.4.0-silver)](https://isaac-sim.github.io/IsaacLab)
+[![IsaacSim](https://img.shields.io/badge/IsaacSim-4.5.0-silver.svg)](https://docs.omniverse.nvidia.com/isaacsim/latest/overview.html)
+[![Isaac Lab](https://img.shields.io/badge/IsaacLab-2.0.1-silver)](https://isaac-sim.github.io/IsaacLab)
 [![Python](https://img.shields.io/badge/python-3.10-blue.svg)](https://docs.python.org/3/whatsnew/3.10.html)
 [![Linux platform](https://img.shields.io/badge/platform-linux--64-orange.svg)](https://releases.ubuntu.com/20.04/)
 [![Windows platform](https://img.shields.io/badge/platform-windows--64-orange.svg)](https://www.microsoft.com/en-us/)
@@ -30,7 +30,7 @@ So far, there are five types of tasks that can be used to train three different 
 $ git clone git@github.com:felipemohr/IsaacLab-Quadruped-Tasks.git
 $ cd IsaacLab-Quadruped-Tasks
 $ conda activate isaaclab
-$ python -m pip install -e exts/omni.isaac.lab_quadruped_tasks
+$ python -m pip install -e source/isaaclab_quadruped_tasks/
 ```
 
 ## Training the Quadruped Agent
