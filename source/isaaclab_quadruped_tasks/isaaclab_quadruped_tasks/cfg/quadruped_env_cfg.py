@@ -337,7 +337,7 @@ class QuadrupedEnvCfg(ManagerBasedRLEnvCfg):
 
     def __post_init__(self):
         """Post initialization"""
-        self.decimation = 8
+        self.decimation = 4
         self.episode_length_s = 20.0
         self.sim.render_interval = 10
         # simulation settings

@@ -37,8 +37,8 @@ python scripts/rsl_rl/train.py --task Isaac-Quadruped-Go2-Vision-v0 --headless -
 
 echo "#################### Training Isaac-Quadruped-Go2-Vision-Stairs-v0 task..."
 python scripts/rsl_rl/train.py --task Isaac-Quadruped-Go2-Vision-Stairs-v0 --headless --enable_cameras --video
-echo "#################### Training Isaac-Quadruped-Go2-Blind-Stairs-v0 task..."
 
+echo "#################### Training Isaac-Quadruped-Go2-Blind-Stairs-v0 task..."
 python scripts/rsl_rl/train.py --task Isaac-Quadruped-Go2-Blind-Stairs-v0 --headless --enable_cameras --video
 
 echo "#################### Training Isaac-Quadruped-Go2-Blind-Rough-v0 task..."

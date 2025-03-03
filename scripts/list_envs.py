@@ -24,7 +24,7 @@ import isaaclab_quadruped_tasks  # noqa: F401
 
 
 def main():
-    """Print all environments registered in `isaac.lab_demo` extension."""
+    """Print all environments registered in `isaaclab_quadruped_tasks` extension."""
     # print all the available environments
     table = PrettyTable(["S. No.", "Task Name", "Entry Point", "Config"])
     table.title = "Available Environments in Isaac Lab Template Extension"
@@ -37,7 +37,7 @@ def main():
     index = 0
     # acquire all Isaac environments names
     for task_spec in gym.registry.values():
-        if "Template-" in task_spec.id:
+        if "Isaac-Quadruped-" in task_spec.id:
             # add details to table
             table.add_row([index + 1, task_spec.id, task_spec.entry_point, task_spec.kwargs["env_cfg_entry_point"]])
             # increment count
