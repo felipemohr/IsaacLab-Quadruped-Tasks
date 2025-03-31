@@ -69,9 +69,12 @@ class SpotCPGBaseEnvCfg(base_envs.QuadrupedCPGEnvCfg):
         self.actions.action.foot_offset_x = -0.1
         self.actions.action.foot_offset_y = 0.11095
         self.actions.action.foot_offset_z = -0.465
-        self.actions.action.step_size = 0.2
-        self.actions.action.ground_clearance = 0.2
-        self.actions.action.ground_penetration = 0.02
+        self.actions.action.feet_distance_x = 0.5957
+        self.actions.action.swing_frequency_limit = 3.0
+        self.actions.action.stance_frequency_limit = 2.0
+        self.actions.action.step_size = 0.15
+        self.actions.action.ground_clearance = 0.15
+        self.actions.action.ground_penetration = 0.015
 
 
 #########################

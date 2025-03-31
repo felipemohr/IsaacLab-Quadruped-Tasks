@@ -47,8 +47,6 @@ class AnymalDCPGBaseEnvCfg(base_envs.QuadrupedCPGEnvCfg):
         self.scene.robot.actuators["legs"].stiffness = 100.0
         self.scene.robot.actuators["legs"].damping = 2.0
 
-        if self.scene.height_scanner is not None:
-            self.scene.height_scanner.prim_path = "{ENV_REGEX_NS}/Robot/body"
         if self.observations.policy.feet_contact is not None:
             self.observations.policy.feet_contact.params["sensor_cfg"].body_names = ".*_FOOT"
         if self.rewards.rew_feet_air_time is not None:
@@ -71,6 +69,9 @@ class AnymalDCPGBaseEnvCfg(base_envs.QuadrupedCPGEnvCfg):
         self.actions.action.foot_offset_x = -0.1
         self.actions.action.foot_offset_y = 0.0
         self.actions.action.foot_offset_z = -0.6
+        self.actions.action.feet_distance_x = 0.8955
+        self.actions.action.swing_frequency_limit = 5.0
+        self.actions.action.stance_frequency_limit = 3.0
         self.actions.action.step_size = 0.2
         self.actions.action.ground_clearance = 0.2
         self.actions.action.ground_penetration = 0.02

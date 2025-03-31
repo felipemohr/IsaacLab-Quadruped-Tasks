@@ -47,7 +47,7 @@ class QuadrupedCPGEnvCfg(QuadrupedEnvCfg):
         self.rewards.rew_ang_vel_z.weight = 1.5
         self.rewards.pen_lin_vel_z.weight = -1.0
         self.rewards.pen_ang_vel_xy.weight = -0.1
-        self.rewards.pen_offset_joints.weight = -0.01
+        self.rewards.pen_offset_joints.weight = -0.02
         self.rewards.pen_joint_powers.weight = -1e-3
 
         self.rewards.rew_feet_air_time = None
@@ -71,18 +71,20 @@ class QuadrupedCPGEnvCfg(QuadrupedEnvCfg):
             hip_length=0.0955,
             thigh_length=0.2130,
             calf_length=0.2130,
-            foot_offset_x=0.0,
+            foot_offset_x=-0.05,
             foot_offset_y=0.0955,
             foot_offset_z=-0.3012,
             # CPG Parameters
             convergence_factor=50.0,
-            swing_frequency_limit=5.0,
+            swing_frequency_limit=4.0,
             stance_frequency_limit=3.0,
             oscilator_limit=(0.5, 2.0),
             step_size=0.1,
             ground_clearance=0.1,
             ground_penetration=0.01,
+            feet_distance_x=0.3868,
             body_height_offset=0.0,
+            body_pitch_offset=0.0,
             use_joints_offset=True,
             joints_offset_scale=0.05,
             gait_type="trot",

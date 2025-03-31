@@ -293,7 +293,7 @@ class RewardsCfg:
     pen_joint_accel = RewTerm(func=mdp.joint_acc_l2, weight=-2.5e-7)
     pen_joint_powers = RewTerm(func=mdp.joint_powers_l1, weight=-3e-3)
     pen_flat_orientation = RewTerm(func=mdp.flat_orientation_l2, weight=-5.0)
-    pen_offset_joints = RewTerm(func=mdp.partial_action_l2, weight=-0.01, params={"first_idx": 8, "last_idx": 20})
+    pen_offset_joints = RewTerm(func=mdp.partial_action_l2, weight=-0.02, params={"first_idx": 7, "last_idx": 18})
 
 
 @configclass
@@ -337,6 +337,8 @@ class QuadrupedEnvCfg(ManagerBasedRLEnvCfg):
 
     def __post_init__(self):
         """Post initialization"""
+        self.sim.physx.gpu_max_rigid_patch_count *= 4
+
         self.decimation = 4
         self.episode_length_s = 20.0
         self.sim.render_interval = 10
