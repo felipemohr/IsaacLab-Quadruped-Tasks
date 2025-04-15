@@ -104,6 +104,16 @@ class QuadrupedCPGActionCfg(QuadrupedIKActionCfg):
 
     class_type: type[ActionTerm] = quadruped_actions.QuadrupedCPGAction
 
+    use_duty_cycle: bool = False
+    """Whether to use duty cycle as part of the Central Pattern Generator configuration. 
+    If True, the action will provide the gait frequency and duty cycle, from which swing and stance frequencies 
+    are computed. If False, the action space will directly control swing and stance frequencies. Defaults to True.
+    """
+    duty_cycle_limit: float | tuple[float, float] = torch.inf
+    """The limit of the duty cycle to use in Central Pattern Generator. Defaults to infinity."""
+    gait_frequency_limit: float = torch.inf
+    """The limit gait frequency in Hz to use in Central Pattern Generator in the entire gait. Defaults to infinity."""
+    
     swing_frequency_limit: float = torch.inf
     """The limit swing frequency in Hz to use in Central Pattern Generator in swing phase. Defaults to infinity."""
     stance_frequency_limit: float = torch.inf

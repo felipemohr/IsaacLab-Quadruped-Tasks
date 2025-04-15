@@ -72,7 +72,7 @@ class JointCPGAction(ActionTerm):
         self._amplitude_dr = torch.zeros(env.num_envs, self._num_joints, device=self.device)
         self._amplitude_d2r = torch.zeros(env.num_envs, self._num_joints, device=self.device)
 
-        self._phase_theta = torch.randn(env.num_envs, self._num_joints, device=self.device)
+        self._phase_theta = torch.zeros(env.num_envs, self._num_joints, device=self.device)
         self._phase_dtheta = torch.zeros(env.num_envs, self._num_joints, device=self.device)
 
         self._control_period = env.sim.cfg.dt * env.cfg.decimation
@@ -419,10 +419,17 @@ class QuadrupedCPGAction(QuadrupedIKAction):
     cfg: actions_cfg.QuadrupedCPGActionCfg
     """The configuration of the action term."""
 
+    _use_duty_cycle: bool = True
+    """Whether to use the duty_cycle to compute swing and stance frequencies to generate CPG sinal or not."""
+    _duty_cycle_limit: tuple[float, float]
+    """The limit of the duty cycle applied to the input action to generate CPG signal (it use_duty_cycle is True)."""
+    _gait_frequency_limit: float
+    """The limit of gait frequency applied to the input action to generate CPG signal (if use_duty_cycle is True)."""
+
     _swing_frequency_limit: float
-    """The limit of swing frequency applied to the input action to generate CPG signal."""
+    """The limit of swing frequency applied to the input action to generate CPG signal (if use_duty_cycle is False)."""
     _stance_frequency_limit: float
-    """The limit of swing frequency applied to the input action to generate CPG signal."""
+    """The limit of swing frequency applied to the input action to generate CPG signal (if use_duty_cycle is False)."""
     _oscilator_limit: tuple[float, float]
     """The limit of the oscilator amplitude applied to the input action to generate CPG signal."""
 
@@ -462,6 +469,8 @@ class QuadrupedCPGAction(QuadrupedIKAction):
         # CPG variables
         self._coupling_weight = torch.ones(env.num_envs, 1, device=self.device)
         self._amplitude_mu = torch.ones(env.num_envs, 4, device=self.device)
+        self._duty_cycle = torch.zeros(env.num_envs, 1, device=self.device)
+        self._gait_frequency = torch.zeros(env.num_envs, 1, device=self.device)
         self._swing_frequency = torch.zeros(env.num_envs, 1, device=self.device)
         self._stance_frequency = torch.zeros(env.num_envs, 1, device=self.device)
         self._frequency_omega = torch.zeros(env.num_envs, 4, device=self.device)
@@ -475,6 +484,8 @@ class QuadrupedCPGAction(QuadrupedIKAction):
 
         self._phase_theta = torch.randn(env.num_envs, 4, device=self.device)
         self._phase_dtheta = torch.zeros(env.num_envs, 4, device=self.device)
+
+        self._feet_ik_pos = torch.zeros(env.num_envs, 3, 4, device=self.device)
 
         self._control_period = env.sim.cfg.dt * env.cfg.decimation
 
@@ -492,7 +503,29 @@ class QuadrupedCPGAction(QuadrupedIKAction):
                 f"Unsupported coupling_weight type: {type(cfg.coupling_weight)}. Supported type is float."
             )
         
-        # Parse frequency and oscilator amplitude limits
+        # Parse use duty cycle and gait frequency and duty cycle limits
+        if isinstance(cfg.use_duty_cycle, bool):
+            self._use_duty_cycle = bool(cfg.use_duty_cycle)
+        else:
+            raise ValueError(
+                f"Unsupported use_duty_cycle type: {type(cfg.use_duty_cycle)}. Supported type is bool."
+            )
+        if isinstance(cfg.gait_frequency_limit, (float, int)):
+            self._gait_frequency_limit = float(abs(cfg.gait_frequency_limit))
+        else:
+            raise ValueError(
+                f"Unsupported gait_frequency_limit type: {type(cfg.gait_frequency_limit)}. Supported type is float."
+            )
+        if isinstance(cfg.duty_cycle_limit, (float, int)):
+            self._duty_cycle_limit = (0, float(abs(cfg.duty_cycle_limit)))
+        elif isinstance(cfg.duty_cycle_limit, (tuple)):
+            self._duty_cycle_limit = (float(abs(cfg.duty_cycle_limit[0])), float(abs(cfg.duty_cycle_limit[1])))
+        else:
+            raise ValueError(
+                f"Unsupported duty_cycle_limit type: {type(cfg.duty_cycle_limit)}. Supported type are tuple and float."
+            )
+        
+        # Parse swing and stance frequencies and oscilator amplitude limits
         if isinstance(cfg.swing_frequency_limit, (float, int)):
             self._swing_frequency_limit = float(abs(cfg.swing_frequency_limit))
         else:
@@ -534,13 +567,13 @@ class QuadrupedCPGAction(QuadrupedIKAction):
 
         # parse feet distance in x and body height and pitch offsets
         if isinstance(cfg.body_height_offset, (float, int)):
-            self._body_height_offset = float(abs(cfg.body_height_offset))
+            self._body_height_offset = float(cfg.body_height_offset)
         else:
             raise ValueError(
                 f"Unsupported body_height_offset type: {type(cfg.body_height_offset)}. Supported type is float."
             )
         if isinstance(cfg.body_pitch_offset, (float, int)):
-            self._body_pitch_offset = float(abs(cfg.body_pitch_offset))
+            self._body_pitch_offset = float(cfg.body_pitch_offset)
         else:
             raise ValueError(
                 f"Unsupported body_pitch_offset type: {type(cfg.body_pitch_offset)}. Supported type is float."
@@ -614,8 +647,9 @@ class QuadrupedCPGAction(QuadrupedIKAction):
 
     @property
     def action_dim(self) -> int:
-        # amplitude_mu for each foot, swing and stance frequencies, coupling weight and omnidirectional phase
-        # if use_joints_offset is True, includes the offset for each of the joints
+        # amplitude_mu for each foot, swing and stance frequencies and omnidirectional phase
+        # if use_duty_cycle is True, the action is composed by the gait frequency and duty cycle, instead of 
+        # swing and stance frequencies, if use_joints_offset is True, includes the offset for each of the joints
         return 19 if self._use_joints_offset else 7
 
     @property
@@ -643,15 +677,15 @@ class QuadrupedCPGAction(QuadrupedIKAction):
         super().process_actions(cpg_processed_action)
 
         if self._use_joints_offset:
-            self._joint_offsets = actions[:, 7:]
-            self._processed_actions += self._joints_offset_scale * self._joint_offsets
+            self._joint_offsets = self._joints_offset_scale * actions[:, 7:]
+            self._processed_actions += self._joint_offsets
 
     def reset(self, env_ids: Sequence[int] | None = None) -> None:
         super().reset(env_ids)
         self._raw_actions_cpg[env_ids] = 0.0
 
-        num_resets = len(env_ids) if env_ids is not None else 0
-
+        self._duty_cycle[env_ids] = 0.0
+        self._gait_frequency[env_ids] = 0.0
         self._swing_frequency[env_ids] = 0.0
         self._stance_frequency[env_ids] = 0.0
 
@@ -660,7 +694,6 @@ class QuadrupedCPGAction(QuadrupedIKAction):
         self._amplitude_d2r[env_ids] = 0.0
 
         self._phase_theta[env_ids] = self._coupling_matrix[env_ids, 0, :]
-        self._phase_theta[env_ids] += 0.25 * torch.randn(num_resets, 4, device=self.device)
         self._phase_dtheta[env_ids] = 0.0
 
     def apply_actions(self):
@@ -685,8 +718,12 @@ class QuadrupedCPGAction(QuadrupedIKAction):
                     f"Invalid gait type index found in gait_type. Valid indices are between 0 and {num_gaits - 1}."
                 )
 
-        self._phase_theta = self._coupling_matrix[:, 0, :] + 0.25 * torch.randn(self.num_envs, 4, device=self.device)
+        self._phase_theta = self._coupling_matrix[:, 0, :]
 
+
+    """
+    Getters and Setters.
+    """
     # Used by cpg_states observation
     def get_cpg_states(self) -> torch.Tensor:
         return torch.concatenate(
@@ -698,6 +735,34 @@ class QuadrupedCPGAction(QuadrupedIKAction):
             ],
             dim=1,
         )
+    
+    def get_processed_actions(self) -> torch.Tensor:
+        return torch.concatenate(
+            [
+                self._amplitude_mu,
+                self._omnidirectional_offset,
+                self._swing_frequency,
+                self._stance_frequency,
+                self._joint_offsets,
+            ],
+            dim=1
+        )
+
+    def get_feet_ik_pos(self) -> torch.Tensor:
+        return self._feet_ik_pos
+
+    def set_body_height(self, body_height: float) -> None:
+        self._body_height = body_height
+
+    def set_body_pitch_offset(self, body_pitch_offset: float) -> None:
+        self._body_pitch_offset = body_pitch_offset
+
+    def set_ground_clearance(self, ground_clearance: float) -> None:
+        self._ground_clearance = ground_clearance
+    
+    def set_ground_penetration(self, ground_penetration: float) -> None:
+        self._ground_penetration = ground_penetration
+
 
     """
     Helper functions.
@@ -705,6 +770,11 @@ class QuadrupedCPGAction(QuadrupedIKAction):
 
     def _step_cpg(self, actions: torch.Tensor) -> torch.Tensor:
         dt = self._control_period
+
+        # TODO: check idxs using self._env.observation_manager.get_active_iterable_terms(0)
+        cmd_vel_norm = torch.norm(self._env.obs_buf["policy"][:, :3], dim=1)
+        
+        mask = (cmd_vel_norm < 0.01).unsqueeze(1)
 
         if self._oscilator_limit[1] < torch.inf:
             oscilator_min, oscilator_max = self._oscilator_limit
@@ -714,22 +784,47 @@ class QuadrupedCPGAction(QuadrupedIKAction):
         )
         else:
             self._amplitude_mu = actions[:, :4]
+        
+        self._amplitude_mu = torch.where(mask, 0.0, self._amplitude_mu)
 
         self._omnidirectional_offset[:, 0] = actions[:, 4]
 
-        if self._swing_frequency_limit < torch.inf:
-            self._swing_frequency[:, 0] = self._swing_frequency_limit * torch.sigmoid(
-                actions[:, 5] / self._swing_frequency_limit
+        # Compute stance and swing frequencies from gait frequency and duty cycle
+        if self._use_duty_cycle:
+            if self._duty_cycle_limit[1] < torch.inf:
+                duty_cycle_min, duty_cycle_max = self._duty_cycle_limit
+                duty_cycle_difference = duty_cycle_max - duty_cycle_min
+                self._duty_cycle = duty_cycle_min + duty_cycle_difference * torch.sigmoid(
+                    actions[:, 5] / duty_cycle_difference
             )
-        else:
-            self._swing_frequency[:, 0] = actions[:, 5]
+            else:
+                self._duty_cycle = torch.sigmoid(actions[:, 5])
 
-        if self._stance_frequency_limit < torch.inf:
-            self._stance_frequency[:, 0] = self._stance_frequency_limit * torch.sigmoid(
-                actions[:, 6] / self._stance_frequency_limit
-            )
+            if self._gait_frequency_limit < torch.inf:
+                self._gait_frequency[:, 0] = self._gait_frequency_limit * torch.sigmoid(
+                    actions[:, 6] / self._gait_frequency_limit
+                )
+            else:
+                self._gait_frequency[:, 0] = actions[:, 6]
+            
+            self._swing_frequency = self._gait_frequency / (1.0 - self._duty_cycle)
+            self._stance_frequency = self._gait_frequency / self._duty_cycle
+
+        # Compute stance and swing frequencies directly from raw action
         else:
-            self._stance_frequency[:, 0] = actions[:, 6]
+            if self._swing_frequency_limit < torch.inf:
+                self._swing_frequency[:, 0] = self._swing_frequency_limit * torch.sigmoid(
+                    actions[:, 5] / self._swing_frequency_limit
+                )
+            else:
+                self._swing_frequency[:, 0] = actions[:, 5]
+
+            if self._stance_frequency_limit < torch.inf:
+                self._stance_frequency[:, 0] = self._stance_frequency_limit * torch.sigmoid(
+                    actions[:, 6] / self._stance_frequency_limit
+                )
+            else:
+                self._stance_frequency[:, 0] = actions[:, 6]
 
         self._amplitude_d2r = self._convergence_factor_a * (
             self._convergence_factor_a / 4.0 * (self._amplitude_mu - self._amplitude_r) - self._amplitude_dr
@@ -779,4 +874,6 @@ class QuadrupedCPGAction(QuadrupedIKAction):
         foot_z[:, 2] -= math.tan(self._body_pitch_offset) * L_2 # RL foot
         foot_z[:, 3] -= math.tan(self._body_pitch_offset) * L_2 # RR foot
 
-        return torch.stack([foot_x, foot_y, foot_z], dim=2).reshape(self._env.num_envs, -1)
+        self._feet_ik_pos = torch.stack([foot_x, foot_y, foot_z], dim=2)
+
+        return self._feet_ik_pos.reshape(self._env.num_envs, -1)
