@@ -36,6 +36,37 @@ class Go2CPGBaseEnvCfg(base_envs.QuadrupedCPGEnvCfg):
         self.scene.robot.actuators["base_legs"].stiffness = 100.0
         self.scene.robot.actuators["base_legs"].damping = 2.0
 
+        # IK Parameters
+        self.actions.action.front_left_joints = ["FL_.*"]
+        self.actions.action.front_right_joints = ["FR_.*"]
+        self.actions.action.rear_left_joints = ["RL_.*"]
+        self.actions.action.rear_right_joints = ["RR_.*"]
+        self.actions.action.front_legs_knee = False
+        self.actions.action.rear_legs_knee = False
+        self.actions.action.hip_length = 0.0955
+        self.actions.action.thigh_length = 0.2130
+        self.actions.action.calf_length = 0.2130
+        self.actions.action.foot_offset_x = -0.05
+        self.actions.action.foot_offset_y = 0.0955
+        self.actions.action.foot_offset_z = -0.3012
+        # CPG Parameters
+        self.actions.action.gait_type = "trot"
+        self.actions.action.use_duty_cycle = False
+        # self.actions.action.gait_frequency_limit = 3.0
+        # self.actions.action.duty_cycle_limit = (0.5, 0.6)
+        self.actions.action.convergence_factor = 50.0
+        self.actions.action.swing_frequency_limit = 6.0
+        self.actions.action.stance_frequency_limit = 6.0
+        self.actions.action.oscilator_limit = (0.5, 2.0)
+        self.actions.action.step_size = 0.05
+        self.actions.action.ground_clearance = 0.1
+        self.actions.action.ground_penetration = 0.01
+        self.actions.action.feet_distance_x = 0.3868
+        self.actions.action.body_height_offset = 0.0
+        self.actions.action.body_pitch_offset = 0.0
+        self.actions.action.use_joints_offset = True
+        self.actions.action.joints_offset_scale = 0.05
+
 
 ########################
 # Go2 Joints Environment
@@ -87,7 +118,6 @@ class Go2CPGBlindFlatEnvCfg(Go2CPGBaseEnvCfg, base_envs.QuadrupedBlindFlatEnvCfg
         Go2CPGBaseEnvCfg.__post_init__(self)
         base_envs.QuadrupedBlindFlatEnvCfg.__post_init__(self)
         self.actions.action.use_joints_offset = False
-        self.rewards.pen_offset_joints = None
 
 
 @configclass
@@ -105,6 +135,11 @@ class Go2CPGBlindStairsEnvCfg(Go2CPGBaseEnvCfg, base_envs.QuadrupedBlindStairsEn
         base_envs.QuadrupedBlindStairsEnvCfg.__post_init__(self)
         self.events.change_gait = None
         self.actions.action.gait_type = "walk"
+        self.actions.action.body_height_offset = 0.05
+        self.actions.action.ground_clearance = 0.15
+        self.actions.action.ground_penetration = 0.015
+        self.actions.action.swing_frequency_limit = 5.0
+        self.actions.action.stance_frequency_limit = 2.0
 
 
 @configclass
@@ -113,6 +148,12 @@ class Go2CPGVisionEnvCfg(Go2CPGBaseEnvCfg, base_envs.QuadrupedVisionEnvCfg):
         Go2CPGBaseEnvCfg.__post_init__(self)
         base_envs.QuadrupedVisionEnvCfg.__post_init__(self)
         self.events.change_gait = None
+        self.actions.action.gait_type = "walk"
+        self.actions.action.body_height_offset = 0.05
+        self.actions.action.ground_clearance = 0.15
+        self.actions.action.ground_penetration = 0.015
+        self.actions.action.swing_frequency_limit = 5.0
+        self.actions.action.stance_frequency_limit = 2.0
 
 
 class Go2CPGVisionStairsEnvCfg(Go2CPGBaseEnvCfg, base_envs.QuadrupedVisionStairsEnvCfg):
@@ -121,3 +162,8 @@ class Go2CPGVisionStairsEnvCfg(Go2CPGBaseEnvCfg, base_envs.QuadrupedVisionStairs
         base_envs.QuadrupedVisionStairsEnvCfg.__post_init__(self)
         self.events.change_gait = None
         self.actions.action.gait_type = "walk"
+        self.actions.action.body_height_offset = 0.05
+        self.actions.action.ground_clearance = 0.15
+        self.actions.action.ground_penetration = 0.015
+        self.actions.action.swing_frequency_limit = 5.0
+        self.actions.action.stance_frequency_limit = 2.0

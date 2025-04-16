@@ -30,7 +30,7 @@ class QuadrupedJointsEnvCfg(QuadrupedEnvCfg):
             asset_name="robot", joint_names=[".*"], scale=0.2, use_default_offset=True
         )
 
-        self.rewards.pen_offset_joints = None
+        self.rewards.pen_action = None
 
         self.observations.policy.feet_contact = None
         self.observations.policy.cpg_state = None
@@ -47,8 +47,8 @@ class QuadrupedCPGEnvCfg(QuadrupedEnvCfg):
         self.rewards.rew_ang_vel_z.weight = 1.5
         self.rewards.pen_lin_vel_z.weight = -1.0
         self.rewards.pen_ang_vel_xy.weight = -0.1
-        self.rewards.pen_offset_joints.weight = -0.02
-        self.rewards.pen_joint_powers.weight = -1e-3
+        self.rewards.pen_action.weight = -0.03
+        self.rewards.pen_joint_powers.weight = -5e-3
 
         self.rewards.rew_feet_air_time = None
         self.rewards.pen_joint_deviation = None
@@ -59,36 +59,7 @@ class QuadrupedCPGEnvCfg(QuadrupedEnvCfg):
         self.rewards.pen_flat_orientation = None
 
         # These parameters are for go2 robot
-        self.actions.action = mdp.QuadrupedCPGActionCfg(
-            asset_name="robot",
-            # IK Parameters
-            front_left_joints=["FL_.*"],
-            front_right_joints=["FR_.*"],
-            rear_left_joints=["RL_.*"],
-            rear_right_joints=["RR_.*"],
-            front_legs_knee=False,
-            rear_legs_knee=False,
-            hip_length=0.0955,
-            thigh_length=0.2130,
-            calf_length=0.2130,
-            foot_offset_x=-0.05,
-            foot_offset_y=0.0955,
-            foot_offset_z=-0.3012,
-            # CPG Parameters
-            convergence_factor=50.0,
-            swing_frequency_limit=4.0,
-            stance_frequency_limit=3.0,
-            oscilator_limit=(0.5, 2.0),
-            step_size=0.1,
-            ground_clearance=0.1,
-            ground_penetration=0.01,
-            feet_distance_x=0.3868,
-            body_height_offset=0.0,
-            body_pitch_offset=0.0,
-            use_joints_offset=True,
-            joints_offset_scale=0.05,
-            gait_type="trot",
-        )
+        self.actions.action = mdp.QuadrupedCPGActionCfg(asset_name="robot")
 
 
 ############################
@@ -181,6 +152,10 @@ class QuadrupedBlindStairsEnvCfg(QuadrupedEnvCfg):
 class QuadrupedVisionEnvCfg(QuadrupedEnvCfg):
     def __post_init__(self):
         super().__post_init__()
+        
+        self.commands.base_velocity.ranges.lin_vel_x = (-0.8, 0.8)
+        self.commands.base_velocity.ranges.lin_vel_y = (-0.4, 0.4)
+        self.commands.base_velocity.ranges.ang_vel_z = (-math.pi / 6, math.pi / 6)
 
         self.scene.terrain.terrain_type = "generator"
         self.scene.terrain.terrain_generator = FULL_TERRAINS_CFG

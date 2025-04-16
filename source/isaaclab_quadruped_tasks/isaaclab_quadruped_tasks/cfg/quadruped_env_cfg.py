@@ -1,6 +1,6 @@
 """
 License: MIT License
-Copyright (c) 2024, Felipe Mohr Santos
+Copyright (c) 2024-2025, Felipe Mohr Santos
 """
 
 import math
@@ -156,7 +156,7 @@ class ObservarionsCfg:
         height_map = ObsTerm(
             func=mdp.height_scan,
             params={"sensor_cfg": SceneEntityCfg("height_scanner")},
-            noise=GaussianNoise(mean=0.0, std=0.05),
+            noise=GaussianNoise(mean=0.0, std=0.03),
             clip=(-1.0, 1.0),
         )
 
@@ -289,11 +289,11 @@ class RewardsCfg:
     )
     pen_lin_vel_z = RewTerm(func=mdp.lin_vel_z_l2, weight=-2.0)
     pen_ang_vel_xy = RewTerm(func=mdp.ang_vel_xy_l2, weight=-0.1)
+    pen_action = RewTerm(func=mdp.action_l2, weight=-0.02)
     pen_action_rate = RewTerm(func=mdp.action_rate_l2, weight=-0.01)
     pen_joint_accel = RewTerm(func=mdp.joint_acc_l2, weight=-2.5e-7)
     pen_joint_powers = RewTerm(func=mdp.joint_powers_l1, weight=-3e-3)
     pen_flat_orientation = RewTerm(func=mdp.flat_orientation_l2, weight=-5.0)
-    pen_offset_joints = RewTerm(func=mdp.partial_action_l2, weight=-0.02, params={"first_idx": 7, "last_idx": 18})
 
 
 @configclass

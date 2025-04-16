@@ -59,22 +59,36 @@ class SpotCPGBaseEnvCfg(base_envs.QuadrupedCPGEnvCfg):
         if self.rewards.pen_undesired_contacts is not None:
             self.rewards.pen_undesired_contacts.params["sensor_cfg"].body_names = ".*_uleg"
 
+        # IK Parameters
         self.actions.action.front_left_joints = ["fl_.*"]
         self.actions.action.front_right_joints = ["fr_.*"]
         self.actions.action.rear_left_joints = ["hl_.*"]
         self.actions.action.rear_right_joints = ["hr_.*"]
+        self.actions.action.front_legs_knee = False
+        self.actions.action.rear_legs_knee = False
         self.actions.action.hip_length = 0.11095
         self.actions.action.thigh_length = 0.3215
         self.actions.action.calf_length = 0.3365
         self.actions.action.foot_offset_x = -0.1
         self.actions.action.foot_offset_y = 0.11095
         self.actions.action.foot_offset_z = -0.465
-        self.actions.action.feet_distance_x = 0.5957
-        self.actions.action.swing_frequency_limit = 3.0
-        self.actions.action.stance_frequency_limit = 2.0
-        self.actions.action.step_size = 0.15
+        # CPG Parameters
+        self.actions.action.gait_type = "trot"
+        self.actions.action.use_duty_cycle = False
+        # self.actions.action.gait_frequency_limit = 3.0
+        # self.actions.action.duty_cycle_limit = (0.5, 0.6)
+        self.actions.action.convergence_factor = 50.0
+        self.actions.action.swing_frequency_limit = 6.0
+        self.actions.action.stance_frequency_limit = 6.0
+        self.actions.action.oscilator_limit = (0.5, 2.0)
+        self.actions.action.step_size = 0.1
         self.actions.action.ground_clearance = 0.15
         self.actions.action.ground_penetration = 0.015
+        self.actions.action.feet_distance_x = 0.5957
+        self.actions.action.body_height_offset = 0.0
+        self.actions.action.body_pitch_offset = 0.0
+        self.actions.action.use_joints_offset = True
+        self.actions.action.joints_offset_scale = 0.05
 
 
 #########################
@@ -127,7 +141,6 @@ class SpotCPGBlindFlatEnvCfg(SpotCPGBaseEnvCfg, base_envs.QuadrupedBlindFlatEnvC
         SpotCPGBaseEnvCfg.__post_init__(self)
         base_envs.QuadrupedBlindFlatEnvCfg.__post_init__(self)
         self.actions.action.use_joints_offset = False
-        self.rewards.pen_offset_joints = None
 
 
 @configclass
@@ -145,6 +158,10 @@ class SpotCPGBlindStairsEnvCfg(SpotCPGBaseEnvCfg, base_envs.QuadrupedBlindStairs
         base_envs.QuadrupedBlindStairsEnvCfg.__post_init__(self)
         self.events.change_gait = None
         self.actions.action.gait_type = "walk"
+        self.actions.action.ground_clearance = 0.2
+        self.actions.action.ground_penetration = 0.02
+        self.actions.action.swing_frequency_limit = 5.0
+        self.actions.action.stance_frequency_limit = 2.0
 
 
 @configclass
@@ -153,6 +170,11 @@ class SpotCPGVisionEnvCfg(SpotCPGBaseEnvCfg, base_envs.QuadrupedVisionEnvCfg):
         SpotCPGBaseEnvCfg.__post_init__(self)
         base_envs.QuadrupedVisionEnvCfg.__post_init__(self)
         self.events.change_gait = None
+        self.actions.action.gait_type = "walk"
+        self.actions.action.ground_clearance = 0.2
+        self.actions.action.ground_penetration = 0.02
+        self.actions.action.swing_frequency_limit = 5.0
+        self.actions.action.stance_frequency_limit = 2.0
 
 
 class SpotCPGVisionStairsEnvCfg(SpotCPGBaseEnvCfg, base_envs.QuadrupedVisionStairsEnvCfg):
@@ -161,3 +183,7 @@ class SpotCPGVisionStairsEnvCfg(SpotCPGBaseEnvCfg, base_envs.QuadrupedVisionStai
         base_envs.QuadrupedVisionStairsEnvCfg.__post_init__(self)
         self.events.change_gait = None
         self.actions.action.gait_type = "walk"
+        self.actions.action.ground_clearance = 0.2
+        self.actions.action.ground_penetration = 0.02
+        self.actions.action.swing_frequency_limit = 5.0
+        self.actions.action.stance_frequency_limit = 2.0
