@@ -18,9 +18,9 @@ So far, there are five types of tasks that can be used to train three different 
 
 |                            | Flat terrain (Blind)                    | Rough terrain (Blind)                    | Stairs terrain (Blind)                    | Rough terrain (Vision)                   | Stairs terrain (Vision)                    |
 | -------------------------- | --------------------------------------- | ---------------------------------------- | ----------------------------------------- | ---------------------------------------- | ------------------------------------------ |
-| **ANYmal D (ANYbotics)**   | `Isaac-Quadruped-AnymalD-Blind-Flat-v0` | `Isaac-Quadruped-AnymalD-Blind-Rough-v0` | `Isaac-Quadruped-AnymalD-Blind-Stairs-v0` | `Isaac-Quadruped-AnymalD-Vision-v0`      | `Isaac-Quadruped-AnymalD-Vision-Stairs-v0` |
-| **Go2 (Unitree)**          | `Isaac-Quadruped-Go2-Blind-Flat-v0`     | `Isaac-Quadruped-Go2-Blind-Rough-v0`     | `Isaac-Quadruped-Go2-Blind-Stairs-v0`     | `Isaac-Quadruped-Go2-Vision-v0`          | `Isaac-Quadruped-Go2-Vision-Stairs-v0`     |
-| **Spot (Boston Dynamics)** | `Isaac-Quadruped-Spot-Blind-Flat-v0`    | `Isaac-Quadruped-Spot-Blind-Rough-v0`    | `Isaac-Quadruped-Spot-Blind-Stairs-v0`    | `Isaac-Quadruped-Spot-Vision-v0`         | `Isaac-Quadruped-Spot-Vision-Stairs-v0`    |
+| **ANYmal D (ANYbotics)**   | `Isaac-Quadruped-AnymalD-Flat-v0` | `Isaac-Quadruped-AnymalD-Blind-v0` | `Isaac-Quadruped-AnymalD-Blind-Stairs-v0` | `Isaac-Quadruped-AnymalD-Vision-v0`      | `Isaac-Quadruped-AnymalD-Vision-Stairs-v0` |
+| **Go2 (Unitree)**          | `Isaac-Quadruped-Go2-Flat-v0`     | `Isaac-Quadruped-Go2-Blind-v0`     | `Isaac-Quadruped-Go2-Blind-Stairs-v0`     | `Isaac-Quadruped-Go2-Vision-v0`          | `Isaac-Quadruped-Go2-Vision-Stairs-v0`     |
+| **Spot (Boston Dynamics)** | `Isaac-Quadruped-Spot-Flat-v0`    | `Isaac-Quadruped-Spot-Blind-v0`    | `Isaac-Quadruped-Spot-Blind-Stairs-v0`    | `Isaac-Quadruped-Spot-Vision-v0`         | `Isaac-Quadruped-Spot-Vision-Stairs-v0`    |
 
 ## Installation
 1. Begin by installing NVIDIA's [Isaac Sim](https://docs.omniverse.nvidia.com/isaacsim/latest/installation/install_workstation.html) and [Isaac Lab](https://isaac-sim.github.io/IsaacLab/source/setup/installation/binaries_installation.html).
@@ -38,7 +38,7 @@ $ python -m pip install -e source/isaaclab_quadruped_tasks/
 Use the `rsl_rl/train.py` script to train the robot, specifying the task:
 
 ```bash
-$ python scripts/rsl_rl/train.py --task Isaac-Quadruped-Go2-Blind-Flat-v0 --headless
+$ python scripts/rsl_rl/train.py --task Isaac-Quadruped-Go2-Flat-v0 --headless
 ```
 
 The available tasks are listed in the **Overview** table, and the `--headless` flag is used to disable the viewport, to speed up the training significantly.
@@ -58,7 +58,7 @@ If you want to enable video clips recording during training, you can include the
 The entire command would be something like:
 
 ```bash
-$ python scripts/rsl_rl/train.py --task Isaac-Quadruped-Go2-Blind-Flat-v0 --num_envs 1024 --max_iterations 8000 --save_interval 500 --seed 42 --headless --enable_cameras --video --video_length 480 --video_interval 12000
+$ python scripts/rsl_rl/train.py --task Isaac-Quadruped-Go2-Flat-v0 --num_envs 1024 --max_iterations 8000 --save_interval 500 --seed 42 --headless --enable_cameras --video --video_length 480 --video_interval 12000
 ```
 
 To resume the training from a checkpoint, you can set the `--resume` to `True` and specify the run directory and checkpoint.  
@@ -70,7 +70,7 @@ To resume the training from a checkpoint, you can set the `--resume` to `True` a
 Alternativelly, you can directly set the relative path to the checkpoint file with the `--checkpoint_path` argument:
 
 ```bash
-$ python scripts/rsl_rl/train.py --task Isaac-Quadruped-Go2-Blind-Stairs-v0 --num_envs 1024 --max_iterations 4000 --resume True --checkpoint_path models/go2_blind_rough/model_8k.pt
+$ python scripts/rsl_rl/train.py --task Isaac-Quadruped-Go2-Blind-Stairs-v0 --num_envs 1024 --max_iterations 4000 --resume True --checkpoint_path models/go2_blind/model_8k.pt
 ```
 
 Training logs will be generated in the directory where the training script was executed. Visualize these logs using TensorBoard:
@@ -84,7 +84,7 @@ $ python -m tensorboard.main --logdir=$PATH_TO_YOUR_LOGS_DIR$
 Use the `rsl_rl/play.py` script to play the trained agent, specifying the task and the model path:
 
 ```bash
-$ python scripts/rsl_rl/play.py --task Isaac-Quadruped-Go2-Blind-Flat-Play-v0 --num_envs 64 --checkpoint_path logs/rsl_rl/go2_blind_flat/XXXX-XX-XX_XX-XX-XX/model_XXXX.pt
+$ python scripts/rsl_rl/play.py --task Isaac-Quadruped-Go2-Flat-Play-v0 --num_envs 64 --checkpoint_path logs/rsl_rl/go2_flat/XXXX-XX-XX_XX-XX-XX/model_XXXX.pt
 ```
 
 The `--num_envs` argument is optional and can also be used to define the number of environments to simulate (default is `64`).
@@ -94,7 +94,7 @@ Note that the task used ends with `-Play-v0` instead of just `-v0`. This task is
 You can also use the pre-trained models present in `models` folder:
 
 ```bash
-$ python scripts/rsl_rl/play.py --task Isaac-Quadruped-Go2-Blind-Rough-Play-v0 --checkpoint_path models/go2_blind_rough/model_8k.pt
+$ python scripts/rsl_rl/play.py --task Isaac-Quadruped-Go2-Blind-Play-v0 --checkpoint_path models/go2_blind/model_8k.pt
 ```
 
 ## Results

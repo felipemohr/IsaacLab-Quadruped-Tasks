@@ -7,6 +7,7 @@ X.0.0 (Unreleased)
 Added
 ^^^^^
 
+* Create new ``CPG`` tasks
 * Add ``physics_material`` and ``change_actuator_gains`` event terms
 * Create new `partial_action_l2` reward term
 * Create new `time_sine_cossine` observation term
@@ -18,7 +19,7 @@ Added
 
 Changed
 ^^^^^
-
+* Rename all tasks
 * Change ``add_base_mass`` to scale the robot mass
 * Change simulation frequency to 400 Hz
 * Refactor quadruped tasks
@@ -163,7 +164,7 @@ Changed
 * Update README.md with information for training and playing agents
 * Remove robot initialization from `QuadrupedSceneCfg`
 * Use `TerrainImporterCfg` in `QuadrupedSceneCfg` instead of `GroundPlaneCfg`
-* Replace `Isaac-Quadruped-Go2-Flat-v0` with `Isaac-Quadruped-Go2-Blind-Flat-v0`
+* Replace `Isaac-Quadruped-Go2-Flat-v0` with `Isaac-Quadruped-Go2-Flat-v0`
 
 1.1.0 (2024-08-30)
 ~~~~~~~~~~~~~~~~~~

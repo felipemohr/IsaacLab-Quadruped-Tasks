@@ -1,17 +1,10 @@
-python scripts/rsl_rl/train.py --task Isaac-Quadruped-Go2-CPG-Blind-Rough-v0 --headless --enable_cameras --video --num_envs 2048 --max_iterations 4000
+python scripts/rsl_rl/train.py --task Isaac-Quadruped-Go2-CPG-Blind-v0 --headless --enable_cameras --video --num_envs 2048
+python scripts/rsl_rl/train.py --task Isaac-Quadruped-Spot-CPG-Blind-v0 --headless --enable_cameras --video --num_envs 2048
+python scripts/rsl_rl/train.py --task Isaac-Quadruped-AnymalD-CPG-Blind-v0 --headless --enable_cameras --video --num_envs 2048
 
-python scripts/rsl_rl/train.py --task Isaac-Quadruped-Spot-CPG-Blind-Rough-v0 --headless --enable_cameras --video --num_envs 2048 --max_iterations 4000
-
-python scripts/rsl_rl/train.py --task Isaac-Quadruped-AnymalD-CPG-Blind-Rough-v0 --headless --enable_cameras --video --num_envs 2048 --max_iterations 4000
-
-
-
-python scripts/rsl_rl/train.py --task Isaac-Quadruped-Go2-CPG-Vision-v0 --headless --enable_cameras --video --num_envs 2048 --max_iterations 4000
-
-python scripts/rsl_rl/train.py --task Isaac-Quadruped-Spot-CPG-Vision-v0 --headless --enable_cameras --video --num_envs 2048 --max_iterations 4000
-
-python scripts/rsl_rl/train.py --task Isaac-Quadruped-AnymalD-CPG-Vision-v0 --headless --enable_cameras --video --num_envs 2048 --max_iterations 4000
-
+python scripts/rsl_rl/train.py --task Isaac-Quadruped-Go2-CPG-Vision-v0 --headless --enable_cameras --video --num_envs 2048
+python scripts/rsl_rl/train.py --task Isaac-Quadruped-Spot-CPG-Vision-v0 --headless --enable_cameras --video --num_envs 2048
+python scripts/rsl_rl/train.py --task Isaac-Quadruped-AnymalD-CPG-Vision-v0 --headless --enable_cameras --video --num_envs 2048
 
 # echo "#################### Training Isaac-Quadruped-AnymalD-Vision-v0 task..."
 # python scripts/rsl_rl/train.py --task Isaac-Quadruped-AnymalD-Vision-v0 --headless --enable_cameras --video
@@ -22,11 +15,11 @@ python scripts/rsl_rl/train.py --task Isaac-Quadruped-AnymalD-CPG-Vision-v0 --he
 # echo "#################### Training Isaac-Quadruped-AnymalD-Blind-Stairs-v0 task..."
 # python scripts/rsl_rl/train.py --task Isaac-Quadruped-AnymalD-Blind-Stairs-v0 --headless --enable_cameras --video
 
-# echo "#################### Training Isaac-Quadruped-AnymalD-Blind-Rough-v0 task..."
-# python scripts/rsl_rl/train.py --task Isaac-Quadruped-AnymalD-Blind-Rough-v0 --headless --enable_cameras --video
+# echo "#################### Training Isaac-Quadruped-AnymalD-Blind-v0 task..."
+# python scripts/rsl_rl/train.py --task Isaac-Quadruped-AnymalD-Blind-v0 --headless --enable_cameras --video
 
-# echo "#################### Training Isaac-Quadruped-AnymalD-Blind-Flat-v0 task..."
-# python scripts/rsl_rl/train.py --task Isaac-Quadruped-AnymalD-Blind-Flat-v0 --headless --enable_cameras --video
+# echo "#################### Training Isaac-Quadruped-AnymalD-Flat-v0 task..."
+# python scripts/rsl_rl/train.py --task Isaac-Quadruped-AnymalD-Flat-v0 --headless --enable_cameras --video
 
 
 
@@ -39,11 +32,11 @@ python scripts/rsl_rl/train.py --task Isaac-Quadruped-AnymalD-CPG-Vision-v0 --he
 # echo "#################### Training Isaac-Quadruped-Spot-Blind-Stairs-v0 task..."
 # python scripts/rsl_rl/train.py --task Isaac-Quadruped-Spot-Blind-Stairs-v0 --headless --enable_cameras --video
 
-# echo "#################### Training Isaac-Quadruped-Spot-Blind-Rough-v0 task..."
-# python scripts/rsl_rl/train.py --task Isaac-Quadruped-Spot-Blind-Rough-v0 --headless --enable_cameras --video
+# echo "#################### Training Isaac-Quadruped-Spot-Blind-v0 task..."
+# python scripts/rsl_rl/train.py --task Isaac-Quadruped-Spot-Blind-v0 --headless --enable_cameras --video
 
-# echo "#################### Training Isaac-Quadruped-Spot-Blind-Flat-v0 task..."
-# python scripts/rsl_rl/train.py --task Isaac-Quadruped-Spot-Blind-Flat-v0 --headless --enable_cameras --video
+# echo "#################### Training Isaac-Quadruped-Spot-Flat-v0 task..."
+# python scripts/rsl_rl/train.py --task Isaac-Quadruped-Spot-Flat-v0 --headless --enable_cameras --video
 
 
 
@@ -56,8 +49,8 @@ python scripts/rsl_rl/train.py --task Isaac-Quadruped-AnymalD-CPG-Vision-v0 --he
 # echo "#################### Training Isaac-Quadruped-Go2-Blind-Stairs-v0 task..."
 # python scripts/rsl_rl/train.py --task Isaac-Quadruped-Go2-Blind-Stairs-v0 --headless --enable_cameras --video
 
-# echo "#################### Training Isaac-Quadruped-Go2-Blind-Rough-v0 task..."
-# python scripts/rsl_rl/train.py --task Isaac-Quadruped-Go2-Blind-Rough-v0 --headless --enable_cameras --video
+# echo "#################### Training Isaac-Quadruped-Go2-Blind-v0 task..."
+# python scripts/rsl_rl/train.py --task Isaac-Quadruped-Go2-Blind-v0 --headless --enable_cameras --video
 
-# echo "#################### Training Isaac-Quadruped-Go2-Blind-Flat-v0 task..."
-# python scripts/rsl_rl/train.py --task Isaac-Quadruped-Go2-Blind-Flat-v0 --headless --enable_cameras --video
+# echo "#################### Training Isaac-Quadruped-Go2-Flat-v0 task..."
+# python scripts/rsl_rl/train.py --task Isaac-Quadruped-Go2-Flat-v0 --headless --enable_cameras --video

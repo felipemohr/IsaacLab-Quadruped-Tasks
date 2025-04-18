@@ -160,7 +160,7 @@ class SpotCPGBlindStairsEnvCfg(SpotCPGBaseEnvCfg, base_envs.QuadrupedBlindStairs
         self.actions.action.gait_type = "walk"
         self.actions.action.ground_clearance = 0.2
         self.actions.action.ground_penetration = 0.02
-        self.actions.action.swing_frequency_limit = 5.0
+        self.actions.action.swing_frequency_limit = 6.0
         self.actions.action.stance_frequency_limit = 2.0
 
 
@@ -173,7 +173,7 @@ class SpotCPGVisionEnvCfg(SpotCPGBaseEnvCfg, base_envs.QuadrupedVisionEnvCfg):
         self.actions.action.gait_type = "walk"
         self.actions.action.ground_clearance = 0.2
         self.actions.action.ground_penetration = 0.02
-        self.actions.action.swing_frequency_limit = 5.0
+        self.actions.action.swing_frequency_limit = 6.0
         self.actions.action.stance_frequency_limit = 2.0
 
 
@@ -185,5 +185,5 @@ class SpotCPGVisionStairsEnvCfg(SpotCPGBaseEnvCfg, base_envs.QuadrupedVisionStai
         self.actions.action.gait_type = "walk"
         self.actions.action.ground_clearance = 0.2
         self.actions.action.ground_penetration = 0.02
-        self.actions.action.swing_frequency_limit = 5.0
+        self.actions.action.swing_frequency_limit = 6.0
         self.actions.action.stance_frequency_limit = 2.0

@@ -44,8 +44,7 @@ class AnymalDCPGBaseEnvCfg(base_envs.QuadrupedCPGEnvCfg):
 
         self.scene.robot = ANYMAL_D_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
         self.scene.robot.actuators["legs"] = ANYDRIVE_3_SIMPLE_ACTUATOR_CFG
-        # self.scene.robot.actuators["legs"].stiffness = 180.0
-        self.scene.robot.actuators["legs"].stiffness = 100.0
+        self.scene.robot.actuators["legs"].stiffness = 180.0
         self.scene.robot.actuators["legs"].damping = 2.0
 
         if self.observations.policy.feet_contact is not None:
@@ -159,7 +158,7 @@ class AnymalDCPGBlindStairsEnvCfg(AnymalDCPGBaseEnvCfg, base_envs.QuadrupedBlind
         self.actions.action.gait_type = "walk"
         self.actions.action.ground_clearance = 0.2
         self.actions.action.ground_penetration = 0.02
-        self.actions.action.swing_frequency_limit = 5.0
+        self.actions.action.swing_frequency_limit = 6.0
         self.actions.action.stance_frequency_limit = 2.0
 
 @configclass
@@ -171,7 +170,7 @@ class AnymalDCPGVisionEnvCfg(AnymalDCPGBaseEnvCfg, base_envs.QuadrupedVisionEnvC
         self.actions.action.gait_type = "walk"
         self.actions.action.ground_clearance = 0.2
         self.actions.action.ground_penetration = 0.02
-        self.actions.action.swing_frequency_limit = 5.0
+        self.actions.action.swing_frequency_limit = 6.0
         self.actions.action.stance_frequency_limit = 2.0
 
 
@@ -183,5 +182,5 @@ class AnymalDCPGVisionStairsEnvCfg(AnymalDCPGBaseEnvCfg, base_envs.QuadrupedVisi
         self.actions.action.gait_type = "walk"
         self.actions.action.ground_clearance = 0.2
         self.actions.action.ground_penetration = 0.02
-        self.actions.action.swing_frequency_limit = 5.0
+        self.actions.action.swing_frequency_limit = 6.0
         self.actions.action.stance_frequency_limit = 2.0

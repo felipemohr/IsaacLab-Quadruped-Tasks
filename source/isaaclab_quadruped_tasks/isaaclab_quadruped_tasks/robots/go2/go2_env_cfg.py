@@ -65,7 +65,7 @@ class Go2CPGBaseEnvCfg(base_envs.QuadrupedCPGEnvCfg):
         self.actions.action.body_height_offset = 0.0
         self.actions.action.body_pitch_offset = 0.0
         self.actions.action.use_joints_offset = True
-        self.actions.action.joints_offset_scale = 0.05
+        self.actions.action.joints_offset_scale = 0.1
 
 
 ########################
@@ -138,7 +138,7 @@ class Go2CPGBlindStairsEnvCfg(Go2CPGBaseEnvCfg, base_envs.QuadrupedBlindStairsEn
         self.actions.action.body_height_offset = 0.05
         self.actions.action.ground_clearance = 0.15
         self.actions.action.ground_penetration = 0.015
-        self.actions.action.swing_frequency_limit = 5.0
+        self.actions.action.swing_frequency_limit = 6.0
         self.actions.action.stance_frequency_limit = 2.0
 
 
@@ -152,7 +152,7 @@ class Go2CPGVisionEnvCfg(Go2CPGBaseEnvCfg, base_envs.QuadrupedVisionEnvCfg):
         self.actions.action.body_height_offset = 0.05
         self.actions.action.ground_clearance = 0.15
         self.actions.action.ground_penetration = 0.015
-        self.actions.action.swing_frequency_limit = 5.0
+        self.actions.action.swing_frequency_limit = 6.0
         self.actions.action.stance_frequency_limit = 2.0
 
 
@@ -165,5 +165,5 @@ class Go2CPGVisionStairsEnvCfg(Go2CPGBaseEnvCfg, base_envs.QuadrupedVisionStairs
         self.actions.action.body_height_offset = 0.05
         self.actions.action.ground_clearance = 0.15
         self.actions.action.ground_penetration = 0.015
-        self.actions.action.swing_frequency_limit = 5.0
+        self.actions.action.swing_frequency_limit = 6.0
         self.actions.action.stance_frequency_limit = 2.0

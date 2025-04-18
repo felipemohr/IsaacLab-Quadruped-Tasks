@@ -17,11 +17,11 @@ from . import anymal_d_env_cfg
 # Create PPO runners for RSL-RL
 ##
 
-anymal_d_joints_blind_flat_runner_cfg = QuadrupedPPORunnerCfg()
-anymal_d_joints_blind_flat_runner_cfg.experiment_name = "anymal_d_joints_blind_flat"
+anymal_d_joints_flat_runner_cfg = QuadrupedPPORunnerCfg()
+anymal_d_joints_flat_runner_cfg.experiment_name = "anymal_d_joints_flat"
 
-anymal_d_joints_blind_rough_runner_cfg = QuadrupedPPORunnerCfg()
-anymal_d_joints_blind_rough_runner_cfg.experiment_name = "anymal_d_joints_blind_rough"
+anymal_d_joints_blind_runner_cfg = QuadrupedPPORunnerCfg()
+anymal_d_joints_blind_runner_cfg.experiment_name = "anymal_d_joints_blind"
 
 anymal_d_joints_blind_stairs_runner_cfg = QuadrupedPPORunnerCfg()
 anymal_d_joints_blind_stairs_runner_cfg.experiment_name = "anymal_d_joints_blind_stairs"
@@ -41,22 +41,22 @@ anymal_d_joints_vision_stairs_runner_cfg.policy.critic_hidden_dims = [512, 256, 
 ##
 
 gym.register(
-    id="Isaac-Quadruped-AnymalD-Joints-Blind-Flat-v0",
+    id="Isaac-Quadruped-AnymalD-Joints-Flat-v0",
     entry_point="isaaclab.envs:ManagerBasedRLEnv",
     disable_env_checker=True,
     kwargs={
         "env_cfg_entry_point": anymal_d_env_cfg.AnymalDJointsBlindFlatEnvCfg,
-        "rsl_rl_cfg_entry_point": anymal_d_joints_blind_flat_runner_cfg,
+        "rsl_rl_cfg_entry_point": anymal_d_joints_flat_runner_cfg,
     },
 )
 
 gym.register(
-    id="Isaac-Quadruped-AnymalD-Joints-Blind-Rough-v0",
+    id="Isaac-Quadruped-AnymalD-Joints-Blind-v0",
     entry_point="isaaclab.envs:ManagerBasedRLEnv",
     disable_env_checker=True,
     kwargs={
         "env_cfg_entry_point": anymal_d_env_cfg.AnymalDJointsBlindRoughEnvCfg,
-        "rsl_rl_cfg_entry_point": anymal_d_joints_blind_rough_runner_cfg,
+        "rsl_rl_cfg_entry_point": anymal_d_joints_blind_runner_cfg,
     },
 )
 
@@ -101,11 +101,11 @@ gym.register(
 
 
 # CPG environments
-anymal_d_cpg_blind_flat_runner_cfg = QuadrupedPPORunnerCfg()
-anymal_d_cpg_blind_flat_runner_cfg.experiment_name = "anymal_d_cpg_blind_flat"
+anymal_d_cpg_flat_runner_cfg = QuadrupedPPORunnerCfg()
+anymal_d_cpg_flat_runner_cfg.experiment_name = "anymal_d_cpg_flat"
 
-anymal_d_cpg_blind_rough_runner_cfg = QuadrupedPPORunnerCfg()
-anymal_d_cpg_blind_rough_runner_cfg.experiment_name = "anymal_d_cpg_blind_rough"
+anymal_d_cpg_blind_runner_cfg = QuadrupedPPORunnerCfg()
+anymal_d_cpg_blind_runner_cfg.experiment_name = "anymal_d_cpg_blind"
 
 anymal_d_cpg_blind_stairs_runner_cfg = QuadrupedPPORunnerCfg()
 anymal_d_cpg_blind_stairs_runner_cfg.experiment_name = "anymal_d_cpg_blind_stairs"
@@ -126,22 +126,22 @@ anymal_d_cpg_vision_stairs_runner_cfg.policy.critic_hidden_dims = [512, 256, 128
 
 
 gym.register(
-    id="Isaac-Quadruped-AnymalD-CPG-Blind-Flat-v0",
+    id="Isaac-Quadruped-AnymalD-CPG-Flat-v0",
     entry_point="isaaclab.envs:ManagerBasedRLEnv",
     disable_env_checker=True,
     kwargs={
         "env_cfg_entry_point": anymal_d_env_cfg.AnymalDCPGBlindFlatEnvCfg,
-        "rsl_rl_cfg_entry_point": anymal_d_cpg_blind_flat_runner_cfg,
+        "rsl_rl_cfg_entry_point": anymal_d_cpg_flat_runner_cfg,
     },
 )
 
 gym.register(
-    id="Isaac-Quadruped-AnymalD-CPG-Blind-Rough-v0",
+    id="Isaac-Quadruped-AnymalD-CPG-Blind-v0",
     entry_point="isaaclab.envs:ManagerBasedRLEnv",
     disable_env_checker=True,
     kwargs={
         "env_cfg_entry_point": anymal_d_env_cfg.AnymalDCPGBlindRoughEnvCfg,
-        "rsl_rl_cfg_entry_point": anymal_d_cpg_blind_rough_runner_cfg,
+        "rsl_rl_cfg_entry_point": anymal_d_cpg_blind_runner_cfg,
     },
 )
 

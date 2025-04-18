@@ -1,7 +1,7 @@
-
 import argparse
 
 from isaaclab.app import AppLauncher
+from carb.input import GamepadInput
 
 parser = argparse.ArgumentParser(description="Test your trained agent.")
 parser.add_argument("--policy_path", type=str, default=None, help="The path to the policy.pt file.")
@@ -31,6 +31,7 @@ app_launcher = AppLauncher(args_cli)
 simulation_app = app_launcher.app
 
 import torch
+import math
 import os
 
 from isaaclab.envs.mdp.events import push_by_setting_velocity
@@ -68,15 +69,6 @@ def main():
     else:
         env_cfg = Go2CPGBaseEnvCfg()
 
-    teleop_interface = None
-    if args_cli.teleop is not None:
-        if args_cli.teleop.lower() == "keyboard":
-            teleop_interface = Se2Keyboard(v_x_sensitivity=1.0, v_y_sensitivity=1.0, omega_z_sensitivity=1.57)
-        elif args_cli.teleop.lower() == "gamepad":
-            teleop_interface = Se2Gamepad(v_x_sensitivity=1.0, v_y_sensitivity=1.0, omega_z_sensitivity=1.57, dead_zone=0.1)
-        env_cfg.commands.base_velocity.debug_vis = False
-        env_cfg.events.change_vel_cmd = None
-    
     sub_terrains = dict()
     if args_cli.terrain == "flat":
         sub_terrains = {"flat": MeshPlaneTerrainCfg()}
@@ -133,6 +125,24 @@ def main():
 
     env = ManagerBasedRLEnv(cfg=env_cfg)
 
+    teleop_interface = None
+    if args_cli.teleop is not None:
+        v_x = 1.0
+        v_y = 1.0
+        omega_z = math.pi / 2
+        if args_cli.use_vision:
+            v_x = 0.8
+            v_y = 0.4
+            omega_z = math.pi / 6
+
+        if args_cli.teleop.lower() == "keyboard":
+            teleop_interface = Se2Keyboard(v_x_sensitivity=v_x, v_y_sensitivity=-v_y, omega_z_sensitivity=-omega_z)
+            teleop_interface.add_callback("ESCAPE", env.reset)
+        elif args_cli.teleop.lower() == "gamepad":
+            teleop_interface = Se2Gamepad(v_x_sensitivity=v_x, v_y_sensitivity=v_y, omega_z_sensitivity=omega_z, dead_zone=0.1)
+            teleop_interface.add_callback(GamepadInput.A, env.reset)
+        env.command_manager.set_debug_vis(False)
+
     policy = torch.jit.load(args_cli.policy_path, map_location=args_cli.device)
 
     time_history = list()
@@ -164,11 +174,6 @@ def main():
             obs_history.append(obs["policy"].clone().detach().cpu())
             actions_processed_history.append(processed_actions)
 
-            # print()
-            # print(actions)
-            # for key, value in processed_actions.items():
-                # print(f"{key}: {value}")
-
             obs, rew, terminated, truncated, info = env.step(actions)
             
             actions_history.append(actions.clone().detach().cpu())
@@ -177,14 +182,10 @@ def main():
             if args_cli.save_data and t % args_cli.save_interval < env.step_dt:
                 path = os.path.join(save_path, save_filename)
                 print(f"Saving data in path: {path}")
-                actions_processed_stacked = {
-                    key: torch.stack([d[key].view(-1) for d in actions_processed_history], dim=0)
-                    for key in actions_processed_history[0]
-                }
                 torch.save({"time": torch.stack(time_history, dim=0), 
                             "obs": torch.stack(obs_history, dim=0), 
                             "actions": torch.stack(actions_history, dim=0),
-                            "actions_processed": actions_processed_stacked,
+                            "actions_processed": torch.stack(actions_processed_history, dim=0),
                             "feet_ik_pos": torch.stack(feet_ik_pos_history, dim=0)}, path)
             
             t += env.step_dt
