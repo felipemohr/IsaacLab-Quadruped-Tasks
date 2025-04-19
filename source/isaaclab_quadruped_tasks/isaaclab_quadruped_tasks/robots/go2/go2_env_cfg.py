@@ -65,7 +65,7 @@ class Go2CPGBaseEnvCfg(base_envs.QuadrupedCPGEnvCfg):
         self.actions.action.body_height_offset = 0.0
         self.actions.action.body_pitch_offset = 0.0
         self.actions.action.use_joints_offset = True
-        self.actions.action.joints_offset_scale = 0.1
+        self.actions.action.joints_offset_scale = 0.05
 
 
 ########################
@@ -134,12 +134,9 @@ class Go2CPGBlindStairsEnvCfg(Go2CPGBaseEnvCfg, base_envs.QuadrupedBlindStairsEn
         Go2CPGBaseEnvCfg.__post_init__(self)
         base_envs.QuadrupedBlindStairsEnvCfg.__post_init__(self)
         self.events.change_gait = None
-        self.actions.action.gait_type = "walk"
         self.actions.action.body_height_offset = 0.05
         self.actions.action.ground_clearance = 0.15
         self.actions.action.ground_penetration = 0.015
-        self.actions.action.swing_frequency_limit = 6.0
-        self.actions.action.stance_frequency_limit = 2.0
 
 
 @configclass
@@ -148,12 +145,9 @@ class Go2CPGVisionEnvCfg(Go2CPGBaseEnvCfg, base_envs.QuadrupedVisionEnvCfg):
         Go2CPGBaseEnvCfg.__post_init__(self)
         base_envs.QuadrupedVisionEnvCfg.__post_init__(self)
         self.events.change_gait = None
-        self.actions.action.gait_type = "walk"
         self.actions.action.body_height_offset = 0.05
         self.actions.action.ground_clearance = 0.15
         self.actions.action.ground_penetration = 0.015
-        self.actions.action.swing_frequency_limit = 6.0
-        self.actions.action.stance_frequency_limit = 2.0
 
 
 class Go2CPGVisionStairsEnvCfg(Go2CPGBaseEnvCfg, base_envs.QuadrupedVisionStairsEnvCfg):
@@ -161,9 +155,6 @@ class Go2CPGVisionStairsEnvCfg(Go2CPGBaseEnvCfg, base_envs.QuadrupedVisionStairs
         Go2CPGBaseEnvCfg.__post_init__(self)
         base_envs.QuadrupedVisionStairsEnvCfg.__post_init__(self)
         self.events.change_gait = None
-        self.actions.action.gait_type = "walk"
         self.actions.action.body_height_offset = 0.05
         self.actions.action.ground_clearance = 0.15
         self.actions.action.ground_penetration = 0.015
-        self.actions.action.swing_frequency_limit = 6.0
-        self.actions.action.stance_frequency_limit = 2.0

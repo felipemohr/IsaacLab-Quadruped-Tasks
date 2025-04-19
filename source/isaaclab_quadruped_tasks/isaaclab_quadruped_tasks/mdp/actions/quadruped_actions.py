@@ -736,7 +736,7 @@ class QuadrupedCPGAction(QuadrupedIKAction):
             dim=1,
         )
     
-    def get_processed_actions(self) -> torch.Tensor:
+    def get_cpg_processed_actions(self) -> torch.Tensor:
         return torch.concatenate(
             [
                 self._amplitude_mu,

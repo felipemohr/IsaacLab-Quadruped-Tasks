@@ -155,11 +155,8 @@ class AnymalDCPGBlindStairsEnvCfg(AnymalDCPGBaseEnvCfg, base_envs.QuadrupedBlind
         AnymalDCPGBaseEnvCfg.__post_init__(self)
         base_envs.QuadrupedBlindStairsEnvCfg.__post_init__(self)
         self.events.change_gait = None
-        self.actions.action.gait_type = "walk"
         self.actions.action.ground_clearance = 0.2
         self.actions.action.ground_penetration = 0.02
-        self.actions.action.swing_frequency_limit = 6.0
-        self.actions.action.stance_frequency_limit = 2.0
 
 @configclass
 class AnymalDCPGVisionEnvCfg(AnymalDCPGBaseEnvCfg, base_envs.QuadrupedVisionEnvCfg):
@@ -167,11 +164,8 @@ class AnymalDCPGVisionEnvCfg(AnymalDCPGBaseEnvCfg, base_envs.QuadrupedVisionEnvC
         AnymalDCPGBaseEnvCfg.__post_init__(self)
         base_envs.QuadrupedVisionEnvCfg.__post_init__(self)
         self.events.change_gait = None
-        self.actions.action.gait_type = "walk"
         self.actions.action.ground_clearance = 0.2
         self.actions.action.ground_penetration = 0.02
-        self.actions.action.swing_frequency_limit = 6.0
-        self.actions.action.stance_frequency_limit = 2.0
 
 
 class AnymalDCPGVisionStairsEnvCfg(AnymalDCPGBaseEnvCfg, base_envs.QuadrupedVisionStairsEnvCfg):
@@ -179,8 +173,5 @@ class AnymalDCPGVisionStairsEnvCfg(AnymalDCPGBaseEnvCfg, base_envs.QuadrupedVisi
         AnymalDCPGBaseEnvCfg.__post_init__(self)
         base_envs.QuadrupedVisionStairsEnvCfg.__post_init__(self)
         self.events.change_gait = None
-        self.actions.action.gait_type = "walk"
         self.actions.action.ground_clearance = 0.2
         self.actions.action.ground_penetration = 0.02
-        self.actions.action.swing_frequency_limit = 6.0
-        self.actions.action.stance_frequency_limit = 2.0

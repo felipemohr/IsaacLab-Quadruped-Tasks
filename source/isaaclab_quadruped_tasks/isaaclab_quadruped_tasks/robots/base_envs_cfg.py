@@ -130,7 +130,7 @@ class QuadrupedBlindStairsEnvCfg(QuadrupedEnvCfg):
         self.scene.height_scanner = None
         self.observations.policy.height_map = None
 
-        self.commands.base_velocity.ranges.lin_vel_x = (0.5, 1.0)
+        self.commands.base_velocity.ranges.lin_vel_x = (0.4, 0.8)
         self.commands.base_velocity.ranges.lin_vel_y = (0.0, 0.0)
         self.commands.base_velocity.ranges.ang_vel_z = (-math.pi / 6, math.pi / 6)
 
@@ -153,10 +153,6 @@ class QuadrupedVisionEnvCfg(QuadrupedEnvCfg):
     def __post_init__(self):
         super().__post_init__()
         
-        self.commands.base_velocity.ranges.lin_vel_x = (-0.8, 0.8)
-        self.commands.base_velocity.ranges.lin_vel_y = (-0.4, 0.4)
-        self.commands.base_velocity.ranges.ang_vel_z = (-math.pi / 6, math.pi / 6)
-
         self.scene.terrain.terrain_type = "generator"
         self.scene.terrain.terrain_generator = FULL_TERRAINS_CFG
 
@@ -171,7 +167,7 @@ class QuadrupedVisionStairsEnvCfg(QuadrupedEnvCfg):
     def __post_init__(self):
         super().__post_init__()
 
-        self.commands.base_velocity.ranges.lin_vel_x = (0.5, 1.0)
+        self.commands.base_velocity.ranges.lin_vel_x = (0.4, 0.8)
         self.commands.base_velocity.ranges.lin_vel_y = (0.0, 0.0)
         self.commands.base_velocity.ranges.ang_vel_z = (-math.pi / 6, math.pi / 6)
 
