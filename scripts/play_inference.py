@@ -2,7 +2,6 @@ import argparse
 
 from isaaclab.app import AppLauncher
 from carb.input import GamepadInput
-from copy import deepcopy
 
 parser = argparse.ArgumentParser(description="Test your trained agent.")
 parser.add_argument("--policy_path", type=str, default=None, help="The path to the policy.pt file.")
@@ -11,6 +10,7 @@ parser.add_argument("--robot", type=str, choices=["anymal_d", "spot", "go2"], de
 parser.add_argument("--use_vision", action="store_true", default=False, help="Use height map from vision.")
 parser.add_argument("--teleop", type=str, default=None, choices=["keyboard", "gamepad"], 
                     help="The teleop device to use. Options: 'keyboard', 'gamepad'.")
+parser.add_argument("--use_predefined_cmds", action="store_true", default=False, help="Use predefined velocity commands.")
 parser.add_argument("--terrain", type=str, default=None, choices=["flat", "random", "waves", "boxes", "slope", "stairs"])
 parser.add_argument("--terrain_difficulty", type=float, default=1.0, 
                     help="The difficulty of the terrain (Betwwen 0 and 1).")
@@ -184,17 +184,46 @@ def main():
     t = 0
     while simulation_app.is_running():
         with torch.inference_mode():
-            # print(t)
+            print(t)
 
             if teleop_interface is not None:
                 cmd_vel = torch.tensor(teleop_interface.advance()).to(args_cli.device)
                 cmd_vel *= torch.tensor([1, -1, -1]).to(args_cli.device)
                 obs["policy"][:, :3] = cmd_vel
 
+            if args_cli.use_predefined_cmds:
+                if t < 5:
+                    obs["policy"][:, :3] = torch.tensor([1.0, 0.0, 0.0]).to(args_cli.device)
+                elif t < 10:
+                    obs["policy"][:, :3] = torch.tensor([0.0, 1.0, 0.0]).to(args_cli.device)
+                elif t < 15:
+                    obs["policy"][:, :3] = torch.tensor([0.0, 0.0, math.pi / 2]).to(args_cli.device)
+                elif t < 20:
+                    obs["policy"][:, :3] = torch.tensor([0.6, 0.6, -math.pi / 4]).to(args_cli.device)
+                else:
+                    t_rel = t - 20.0
+                    angle = 2.0 * math.pi * 0.1 * t
+                    if t_rel < 1:
+                        alpha = t_rel
+                        base = torch.tensor([0.6, 0.6, -math.pi / 4]).to(args_cli.device)
+                        smooth = torch.tensor([
+                            0.6 * math.cos(angle),
+                            0.6 * math.sin(angle),
+                            math.pi / 4 * math.sin(angle)
+                        ]).to(args_cli.device)
+                        obs["policy"][:, :3] = (1 - alpha) * base + alpha * smooth
+                    else:
+                        obs["policy"][:, :3] = torch.tensor([
+                            0.6 * math.cos(angle),
+                            0.6 * math.sin(angle),
+                            math.pi / 4 * math.sin(angle)
+                        ]).to(args_cli.device)
+
             if args_cli.push_robot:
                 if t % args_cli.push_interval < env.step_dt:
                     print("Pushing the robot")
-                    push_by_setting_velocity(env, velocity_range={"x": (-1.0, 1.0), "y": (-1.0, 1.0), "yaw": (-1.57, 1.57)}, env_ids=torch.tensor([0]).to(args_cli.device))
+                    push_by_setting_velocity(env, velocity_range={"x": (-1.0, 1.0), "y": (-1.0, 1.0), "yaw": (-1.57, 1.57)}, 
+                                             env_ids=torch.tensor([0]).to(args_cli.device))
 
             actions = torch.clamp(policy(obs["policy"]), -100.0, 100.0)
             cpg_processed_actions = env.action_manager.get_term("action").get_cpg_processed_actions()
