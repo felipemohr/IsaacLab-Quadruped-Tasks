@@ -66,11 +66,11 @@ class SpotCPGBaseEnvCfg(base_envs.QuadrupedCPGEnvCfg):
         self.actions.action.rear_right_joints = ["hr_.*"]
         self.actions.action.front_legs_knee = False
         self.actions.action.rear_legs_knee = False
-        self.actions.action.hip_length = 0.11095
+        self.actions.action.hip_length = 0.11094
         self.actions.action.thigh_length = 0.3215
         self.actions.action.calf_length = 0.3365
         self.actions.action.foot_offset_x = -0.1
-        self.actions.action.foot_offset_y = 0.11095
+        self.actions.action.foot_offset_y = 0.11094
         self.actions.action.foot_offset_z = -0.465
         # CPG Parameters
         self.actions.action.gait_type = "trot"
@@ -85,6 +85,7 @@ class SpotCPGBaseEnvCfg(base_envs.QuadrupedCPGEnvCfg):
         self.actions.action.ground_clearance = 0.15
         self.actions.action.ground_penetration = 0.015
         self.actions.action.feet_distance_x = 0.5957
+        self.actions.action.feet_distance_y = 0.33188
         self.actions.action.body_height_offset = 0.0
         self.actions.action.body_pitch_offset = 0.0
         self.actions.action.use_joints_offset = True

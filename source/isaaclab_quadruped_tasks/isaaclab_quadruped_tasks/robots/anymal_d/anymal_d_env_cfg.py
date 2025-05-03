@@ -82,7 +82,8 @@ class AnymalDCPGBaseEnvCfg(base_envs.QuadrupedCPGEnvCfg):
         self.actions.action.step_size = 0.1
         self.actions.action.ground_clearance = 0.15
         self.actions.action.ground_penetration = 0.015
-        self.actions.action.feet_distance_x = 0.8955
+        self.actions.action.feet_distance_x = 0.746
+        self.actions.action.feet_distance_y = 0.218
         self.actions.action.body_height_offset = 0.0
         self.actions.action.body_pitch_offset = 0.0
         self.actions.action.use_joints_offset = True

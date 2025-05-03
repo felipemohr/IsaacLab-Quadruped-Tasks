@@ -134,6 +134,8 @@ class QuadrupedCPGActionCfg(QuadrupedIKActionCfg):
 
     feet_distance_x: float = 0.4
     """The ditance between the front and rear feet, in meters. Defaults to 0.4."""
+    feet_distance_y: float = 0.2
+    """The ditance between the left and right feet, in meters. Defaults to 0.2."""
     body_height_offset: float = 0.0
     """The offset of the body height in meters w.r.t its default height. Defaults to 0.0."""
     body_pitch_offset: float = 0.0

@@ -62,6 +62,7 @@ class Go2CPGBaseEnvCfg(base_envs.QuadrupedCPGEnvCfg):
         self.actions.action.ground_clearance = 0.1
         self.actions.action.ground_penetration = 0.01
         self.actions.action.feet_distance_x = 0.3868
+        self.actions.action.feet_distance_y = 0.284
         self.actions.action.body_height_offset = 0.0
         self.actions.action.body_pitch_offset = 0.0
         self.actions.action.use_joints_offset = True
