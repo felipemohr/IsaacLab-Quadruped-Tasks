@@ -17,6 +17,8 @@ keywords = ["locomotion", "quadruped", "isaaclab"]
 [dependencies]
 "isaaclab" = {}
 "isaaclab_assets" = {}
+"isaaclab_mimic" = {}
+"isaaclab_rl" = {}
 "isaaclab_tasks" = {}
 # NOTE: Add additional dependencies here
 

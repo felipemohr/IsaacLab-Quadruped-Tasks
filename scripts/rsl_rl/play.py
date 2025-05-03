@@ -1,3 +1,8 @@
+# Copyright (c) 2022-2025, The Isaac Lab Project Developers.
+# All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 """Script to play a checkpoint if an RL agent from RSL-RL."""
 
 """Launch Isaac Sim Simulator first."""
@@ -18,6 +23,7 @@ parser.add_argument(
 )
 parser.add_argument("--num_envs", type=int, default=None, help="Number of environments to simulate.")
 parser.add_argument("--task", type=str, default=None, help="Name of the task.")
+parser.add_argument("--real-time", action="store_true", default=False, help="Run in real-time, if possible.")
 # append RSL-RL cli arguments
 cli_args.add_rsl_rl_args(parser)
 # append AppLauncher cli args
@@ -35,16 +41,20 @@ simulation_app = app_launcher.app
 
 import gymnasium as gym
 import os
+import time
 import torch
 
 from rsl_rl.runners import OnPolicyRunner
 
 from isaaclab.envs import DirectMARLEnv, multi_agent_to_single_agent
+from isaaclab.utils.assets import retrieve_file_path
 from isaaclab.utils.dict import print_dict
+
 from isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlVecEnvWrapper, export_policy_as_jit, export_policy_as_onnx
+
+import isaaclab_tasks  # noqa: F401
 from isaaclab_tasks.utils import get_checkpoint_path, parse_env_cfg
 
-# Import extensions to set up environment tasks
 import isaaclab_quadruped_tasks  # noqa: F401
 
 def main():
@@ -59,11 +69,20 @@ def main():
     log_root_path = os.path.join("logs", "rsl_rl", agent_cfg.experiment_name)
     log_root_path = os.path.abspath(log_root_path)
     print(f"[INFO] Loading experiment from directory: {log_root_path}")
-    resume_path = get_checkpoint_path(log_root_path, agent_cfg.load_run, agent_cfg.load_checkpoint)
+    if args_cli.checkpoint:
+        resume_path = retrieve_file_path(args_cli.checkpoint)
+    else:
+        resume_path = get_checkpoint_path(log_root_path, agent_cfg.load_run, agent_cfg.load_checkpoint)
+
     log_dir = os.path.dirname(resume_path)
 
     # create isaac environment
     env = gym.make(args_cli.task, cfg=env_cfg, render_mode="rgb_array" if args_cli.video else None)
+
+    # convert to single-agent instance if required by the RL algorithm
+    if isinstance(env.unwrapped, DirectMARLEnv):
+        env = multi_agent_to_single_agent(env)
+
     # wrap for video recording
     if args_cli.video:
         video_kwargs = {
@@ -76,10 +95,6 @@ def main():
         print_dict(video_kwargs, nesting=4)
         env = gym.wrappers.RecordVideo(env, **video_kwargs)
 
-    # convert to single-agent instance if required by the RL algorithm
-    if isinstance(env.unwrapped, DirectMARLEnv):
-        env = multi_agent_to_single_agent(env)
-
     # wrap around environment for rsl-rl
     env = RslRlVecEnvWrapper(env, clip_actions=agent_cfg.clip_actions)
 
@@ -91,20 +106,30 @@ def main():
     # obtain the trained policy for inference
     policy = ppo_runner.get_inference_policy(device=env.unwrapped.device)
 
+    # extract the neural network module
+    # we do this in a try-except to maintain backwards compatibility.
+    try:
+        # version 2.3 onwards
+        policy_nn = ppo_runner.alg.policy
+    except AttributeError:
+        # version 2.2 and below
+        policy_nn = ppo_runner.alg.actor_critic
+
     # export policy to onnx/jit
     export_model_dir = os.path.join(os.path.dirname(resume_path), "exported")
-    export_policy_as_jit(
-        ppo_runner.alg.policy, ppo_runner.obs_normalizer, path=export_model_dir, filename="policy.pt"
-    )
+    export_policy_as_jit(policy_nn, ppo_runner.obs_normalizer, path=export_model_dir, filename="policy.pt")
     export_policy_as_onnx(
-        ppo_runner.alg.policy, normalizer=ppo_runner.obs_normalizer, path=export_model_dir, filename="policy.onnx"
+        policy_nn, normalizer=ppo_runner.obs_normalizer, path=export_model_dir, filename="policy.onnx"
     )
+
+    dt = env.unwrapped.step_dt
 
     # reset environment
     obs, _ = env.get_observations()
     timestep = 0
     # simulate environment
     while simulation_app.is_running():
+        start_time = time.time()
         # run everything in inference mode
         with torch.inference_mode():
             # agent stepping
@@ -116,6 +141,11 @@ def main():
             # Exit the play loop after recording one video
             if timestep == args_cli.video_length:
                 break
+
+        # time delay for real-time evaluation
+        sleep_time = dt - (time.time() - start_time)
+        if args_cli.real_time and sleep_time > 0:
+            time.sleep(sleep_time)
 
     # close the simulator
     env.close()

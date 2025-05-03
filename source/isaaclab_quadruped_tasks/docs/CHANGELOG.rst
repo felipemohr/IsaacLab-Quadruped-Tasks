@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-X.0.0 (Unreleased)
+5.0.0 (Unreleased)
 ~~~~~~~~~~~~~~~~~~
 
 Added
@@ -23,6 +23,7 @@ Changed
 * Change ``add_base_mass`` to scale the robot mass
 * Change simulation frequency to 400 Hz
 * Refactor quadruped tasks
+* Update to Isaac Sim 4.5.0 and Isaac Lab 2.1.0
 
 4.0.0 (2025-01-06)
 ~~~~~~~~~~~~~~~~~~

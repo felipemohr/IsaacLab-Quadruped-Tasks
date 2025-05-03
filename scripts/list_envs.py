@@ -1,8 +1,16 @@
+# Copyright (c) 2022-2025, The Isaac Lab Project Developers.
+# All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
-Script to print all the available environments in the extension.
+Script to print all the available environments in Isaac Lab.
 
 The script iterates over all registered environments and stores the details in a table.
 It prints the name of the environment, the entry point and the config file.
+
+All the environments are registered in the `isaaclab_quadruped_tasks` extension. They start
+with `Isaac-Quadruped` in their name.
 """
 
 """Launch Isaac Sim Simulator first."""
@@ -27,7 +35,7 @@ def main():
     """Print all environments registered in `isaaclab_quadruped_tasks` extension."""
     # print all the available environments
     table = PrettyTable(["S. No.", "Task Name", "Entry Point", "Config"])
-    table.title = "Available Environments in Isaac Lab Template Extension"
+    table.title = "Available Environments in Isaac Lab"
     # set alignment of table columns
     table.align["Task Name"] = "l"
     table.align["Entry Point"] = "l"
