@@ -487,7 +487,7 @@ class QuadrupedCPGAction(QuadrupedIKAction):
         self._phase_theta = torch.randn(env.num_envs, 4, device=self.device)
         self._phase_dtheta = torch.zeros(env.num_envs, 4, device=self.device)
 
-        self._feet_ik_pos = torch.zeros(env.num_envs, 3, 4, device=self.device)
+        self._feet_ik_pos = torch.zeros(env.num_envs, 4, 3, device=self.device)
 
         self._control_period = env.sim.cfg.dt * env.cfg.decimation
 

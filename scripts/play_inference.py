@@ -11,19 +11,23 @@ parser.add_argument("--use_vision", action="store_true", default=False, help="Us
 parser.add_argument("--teleop", type=str, default=None, choices=["keyboard", "gamepad"], 
                     help="The teleop device to use. Options: 'keyboard', 'gamepad'.")
 parser.add_argument("--use_predefined_cmds", action="store_true", default=False, help="Use predefined velocity commands.")
+parser.add_argument("--use_higher_velocities", action="store_true", default=False, 
+                    help="Test velocity commands higher than those seem during training. If true, a PI controller will be used")
 parser.add_argument("--terrain", type=str, default=None, choices=["flat", "random", "waves", "boxes", "slope", "stairs"])
-parser.add_argument("--terrain_difficulty", type=float, default=1.0, 
+parser.add_argument("--terrain_difficulty", type=float, default=0.5, 
                     help="The difficulty of the terrain (Betwwen 0 and 1).")
 parser.add_argument("--push_robot", action="store_true", default=False, 
                     help="Push the robot periodically by randomly increasing the root velocity.")
-parser.add_argument("--push_interval", type=float, default=10.0, 
+parser.add_argument("--push_interval", type=float, default=5.0, 
                     help="The interval between each push, in seconds.")
 parser.add_argument("--num_envs", type=int, default=1, help="Number of environments to simulate.")
 parser.add_argument("--save_data", action="store_true", default=False, help="Save the data for inference.")
 parser.add_argument("--save_path", type=str, default=None, help="The path to save the data for inference.")
 parser.add_argument("--save_filename", type=str, default=None, help="The filename to save the data for inference.")
-parser.add_argument("--save_interval", type=float, default=10.0, 
+parser.add_argument("--save_interval", type=float, default=5.0, 
                     help="The interval between each data save, in seconds.")
+parser.add_argument("--max_sim_time", type=float, default=None, 
+                    help="The maximun simulation time, in seconds. After that, the simulation will close.")
 
 AppLauncher.add_app_launcher_args(parser)
 args_cli = parser.parse_args()
@@ -55,6 +59,7 @@ from isaaclab_quadruped_tasks.robots.spot.spot_env_cfg import SpotCPGBaseEnvCfg
 from isaaclab_quadruped_tasks.robots.anymal_d.anymal_d_env_cfg import AnymalDCPGBaseEnvCfg
 
 def main():
+    # Set the save file path
     save_path = args_cli.save_path
     save_filename = args_cli.save_filename
     if args_cli.save_data:
@@ -66,13 +71,19 @@ def main():
         if not os.path.exists(save_path):
             os.makedirs(save_path)
 
+    # Defines wich environment will be used, according to the selected robot
+    base_prim_path = "{ENV_REGEX_NS}/Robot/base"
+    foot_prim_path = "{ENV_REGEX_NS}/Robot/.*_foot"
     if args_cli.robot == "anymal_d":
         env_cfg = AnymalDCPGBaseEnvCfg()
+        foot_prim_path = "{ENV_REGEX_NS}/Robot/.*_FOOT"
     elif args_cli.robot == "spot":
         env_cfg = SpotCPGBaseEnvCfg()
+        base_prim_path = "{ENV_REGEX_NS}/Robot/body"
     else:
         env_cfg = Go2CPGBaseEnvCfg()
 
+    # Defines wich terrain will be used
     sub_terrains = dict()
     if args_cli.terrain == "flat":
         sub_terrains = {"flat": MeshPlaneTerrainCfg()}
@@ -105,6 +116,7 @@ def main():
         env_cfg.scene.terrain.terrain_type = "generator"
         env_cfg.scene.terrain.terrain_generator = TERRAIN_CFG
 
+    # Defines if the task uses vision or not, and configure some action parameters according to it
     if not args_cli.use_vision:
         env_cfg.scene.height_scanner = None
         env_cfg.observations.policy.height_map = None
@@ -117,8 +129,8 @@ def main():
             env_cfg.actions.action.ground_clearance = 0.15
             env_cfg.actions.action.ground_penetration = 0.015
 
+    # Change some parameters of the environment for play
     env_cfg.scene.num_envs = args_cli.num_envs
-
     env_cfg.terminations.base_contact = None
     env_cfg.terminations.time_out = None
     env_cfg.observations.policy.enable_corruption = False
@@ -133,21 +145,25 @@ def main():
     env_cfg.events.reset_robot_base.params["pose_range"]["y"] = (-0.0, 0.0)
     env_cfg.events.reset_robot_base.params["pose_range"]["yaw"] = (torch.pi, torch.pi)
 
+    # Defines the device to be used
     env_cfg.sim.device = args_cli.device
     if args_cli.device == "cpu":
         env_cfg.sim.use_fabric = False
 
+    # Creates new sensors for getting the transform information from the feet to the robot's base
     foot_transforms_cfg = FrameTransformerCfg(
-        prim_path="{ENV_REGEX_NS}/Robot/base",
-        target_frames=[FrameTransformerCfg.FrameCfg(prim_path="{ENV_REGEX_NS}/Robot/.*_foot")],
+        prim_path=base_prim_path,
+        target_frames=[FrameTransformerCfg.FrameCfg(prim_path=foot_prim_path)],
         update_period=0.0,
         debug_vis=True,
     )
-    foot_transforms_cfg.visualizer_cfg.markers["frame"].scale = (0.05, 0.05, 0.05)
+    foot_transforms_cfg.visualizer_cfg.markers["frame"].scale = (0.1, 0.1, 0.1)
     env_cfg.scene.foot_transforms = foot_transforms_cfg
 
+    # Parses the configurations to create the environment   
     env = ManagerBasedRLEnv(cfg=env_cfg)
 
+    # Creates the teleop interface, if required
     teleop_interface = None
     if args_cli.teleop is not None:
         v_x = 1.0
@@ -166,40 +182,57 @@ def main():
             teleop_interface.add_callback(GamepadInput.A, env.reset)
         env.command_manager.set_debug_vis(False)
 
+    if args_cli.use_predefined_cmds:
+        env.command_manager.set_debug_vis(False)
+
+    # Loads the trained policy
     policy = torch.jit.load(args_cli.policy_path, map_location=args_cli.device)
 
+    # Initializes the variables for the PI controller, if use_higher_velocities is set to True
+    sum_vel_error = torch.zeros(args_cli.num_envs, 3)
+    kp = 2.0
+    ki = 3.0
+
+    # These lists will store all simulation data
     time_history = list()
     obs_history = list()
     actions_history = list()
+    setpoint_vel_history = list()
     cpg_actions_processed_history = list()
     joints_actions_processed_history = list()
     feet_ik_pos_history = list()
+    omnidirectional_offsets_history = list()
     root_pos_history = list()
     root_quat_history = list()
     foot_transforms_history = list()
 
+    # Resets the environment and teleop interface
     obs, _ = env.reset()
     if teleop_interface is not None:
         teleop_interface.reset()
+    # Starts the simulation loop
     t = 0
     while simulation_app.is_running():
         with torch.inference_mode():
-            print(t)
+            # print(t)
 
+            cmd_vel = obs["policy"][:, :3]
+            # If a teleop interface is being used, it will set the velocity commands
             if teleop_interface is not None:
                 cmd_vel = torch.tensor(teleop_interface.advance()).to(args_cli.device)
                 cmd_vel *= torch.tensor([1, -1, -1]).to(args_cli.device)
-                obs["policy"][:, :3] = cmd_vel
+                cmd_vel = cmd_vel.expand(args_cli.num_envs, 3)
 
+            # If the use_predefined_cmds is used, predefined the velocity commands will be set
             if args_cli.use_predefined_cmds:
                 if t < 5:
-                    obs["policy"][:, :3] = torch.tensor([1.0, 0.0, 0.0]).to(args_cli.device)
+                    cmd_vel = torch.tensor([1.0, 0.0, 0.0]).to(args_cli.device)
                 elif t < 10:
-                    obs["policy"][:, :3] = torch.tensor([0.0, 1.0, 0.0]).to(args_cli.device)
+                    cmd_vel = torch.tensor([0.0, 1.0, 0.0]).to(args_cli.device)
                 elif t < 15:
-                    obs["policy"][:, :3] = torch.tensor([0.0, 0.0, math.pi / 2]).to(args_cli.device)
+                    cmd_vel = torch.tensor([0.0, 0.0, math.pi / 2]).to(args_cli.device)
                 elif t < 20:
-                    obs["policy"][:, :3] = torch.tensor([0.6, 0.6, -math.pi / 4]).to(args_cli.device)
+                    cmd_vel = torch.tensor([0.6, 0.6, -math.pi / 4]).to(args_cli.device)
                 else:
                     t_rel = t - 20.0
                     angle = 2.0 * math.pi * 0.1 * t
@@ -211,57 +244,92 @@ def main():
                             0.6 * math.sin(angle),
                             math.pi / 4 * math.sin(angle)
                         ]).to(args_cli.device)
-                        obs["policy"][:, :3] = (1 - alpha) * base + alpha * smooth
+                        cmd_vel = (1 - alpha) * base + alpha * smooth
                     else:
-                        obs["policy"][:, :3] = torch.tensor([
+                        cmd_vel = torch.tensor([
                             0.6 * math.cos(angle),
                             0.6 * math.sin(angle),
                             math.pi / 4 * math.sin(angle)
                         ]).to(args_cli.device)
+                cmd_vel = cmd_vel.expand(args_cli.num_envs, 3)
+            
+            # If the use_higher_velocities is used, a PI controller will set the velocity commands
+            setpoint_vel = cmd_vel
+            if args_cli.use_higher_velocities:
+                setpoint_vel = torch.tensor([1.0, 0.0, 0.0], device=args_cli.device).repeat(args_cli.num_envs, 1)
+                setpoint_vel[:, 0] += 0.25 * (t // 5.0)
+                if t % 5.0 < env.step_dt:
+                    print(f"Setting setpoint velocity to {setpoint_vel}")
+                
+                current_vel = torch.cat([obs["policy"][:, 3:5], obs["policy"][:, 8:9]], dim=1)
+                vel_error = setpoint_vel - current_vel
+                
+                sum_vel_error += vel_error * env.step_dt
+                sum_vel_error = torch.clamp(sum_vel_error, min=-4.0 / ki, max=4.0 / ki)
 
+                cmd_vel = kp * vel_error + ki * sum_vel_error
+                cmd_vel = torch.clamp(cmd_vel, min=-4.0, max=4.0)
+
+            # Sets the velocity command for the policy
+            obs["policy"][:, :3] = cmd_vel
+
+            # Randomly pushes the robot base, if required
             if args_cli.push_robot:
                 if t % args_cli.push_interval < env.step_dt:
                     print("Pushing the robot")
                     push_by_setting_velocity(env, velocity_range={"x": (-1.0, 1.0), "y": (-1.0, 1.0), "yaw": (-1.57, 1.57)}, 
                                              env_ids=torch.tensor([0]).to(args_cli.device))
 
+            # Computes the action
             actions = torch.clamp(policy(obs["policy"]), -100.0, 100.0)
-            cpg_processed_actions = env.action_manager.get_term("action").get_cpg_processed_actions()
-            joints_processed_actions = env.action_manager.get_term("action").processed_actions
 
-            robot : Articulation = env.scene["robot"]
-
+            # Stores data
             time_history.append(torch.tensor([t]).cpu())
             obs_history.append(obs["policy"].clone().detach().cpu())
-            cpg_actions_processed_history.append(cpg_processed_actions.clone().detach().cpu())
-            joints_actions_processed_history.append(joints_processed_actions.clone().detach().cpu())
-            root_pos_history.append(robot.data.root_pos_w.clone().detach().cpu())
-            root_quat_history.append(robot.data.root_quat_w.clone().detach().cpu())
-            foot_transforms_history.append(env.scene["foot_transforms"].data.target_pos_source.clone().detach().cpu())
+            actions_history.append(actions.clone().detach().cpu())
+            setpoint_vel_history.append(setpoint_vel.clone().detach().cpu())
 
+            # Steps the environment
             obs, rew, terminated, truncated, info = env.step(actions)
 
-            actions_history.append(actions.clone().detach().cpu())
+            # Stores data
+            robot : Articulation = env.scene["robot"]
+            cpg_processed_actions = env.action_manager.get_term("action").get_cpg_processed_actions()
+            joints_processed_actions = env.action_manager.get_term("action").processed_actions
+            cpg_actions_processed_history.append(cpg_processed_actions.clone().detach().cpu())
+            joints_actions_processed_history.append(joints_processed_actions.clone().detach().cpu())
+            omnidirectional_offsets_history.append(env.action_manager.get_term("action").get_omnidirectional_offset().clone().detach().cpu())
             feet_ik_pos_history.append(env.action_manager.get_term("action").get_feet_ik_pos().clone().detach().cpu())
+            foot_transforms_history.append(env.scene["foot_transforms"].data.target_pos_source.clone().detach().cpu())
+            root_pos_history.append(robot.data.root_pos_w.clone().detach().cpu())
+            root_quat_history.append(robot.data.root_quat_w.clone().detach().cpu())
 
+            # Saves the data according to the save_interval
             if args_cli.save_data and t % args_cli.save_interval < env.step_dt:
                 path = os.path.join(save_path, save_filename)
                 print(f"Saving data in path: {path}")
                 torch.save(
                     {
-                        "time": torch.stack(time_history, dim=0), 
+                        "time": torch.stack(time_history, dim=0),
                         "obs": torch.stack(obs_history, dim=0), 
                         "actions": torch.stack(actions_history, dim=0),
+                        "setpoint_vel": torch.stack(setpoint_vel_history, dim=0), 
                         "cpg_processed_actions": torch.stack(cpg_actions_processed_history, dim=0),
                         "joints_processed_actions": torch.stack(joints_actions_processed_history, dim=0),
+                        "omnidirectional_offsets": torch.stack(omnidirectional_offsets_history, dim=0),
                         "feet_ik_pos": torch.stack(feet_ik_pos_history, dim=0),
+                        "foot_transforms": torch.stack(foot_transforms_history, dim=0),
                         "root_pos": torch.stack(root_pos_history, dim=0),
                         "root_quat": torch.stack(root_quat_history, dim=0),
-                        "foot_transforms": torch.stack(foot_transforms_history, dim=0),
-                    }, 
+                    },
                     path
                 )
             
+            # Increases the simulation time
+            if args_cli.max_sim_time is not None:
+                if t > args_cli.max_sim_time:
+                    print("Stopping simulation due to time limit.")
+                    break
             t += env.step_dt
     
     env.close()
