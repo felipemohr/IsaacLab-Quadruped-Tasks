@@ -4,10 +4,10 @@ Copyright (c) 2024, Felipe Mohr Santos
 """
 
 from isaaclab.utils import configclass
-
 from isaaclab_quadruped_tasks.robots import base_envs_cfg as base_envs
-
 from isaaclab_assets.robots.spot import SPOT_CFG
+
+import math
 
 ########################
 # Spot Base Environments
@@ -45,10 +45,12 @@ class SpotCPGBaseEnvCfg(base_envs.QuadrupedCPGEnvCfg):
         super().__post_init__()
 
         self.scene.robot = SPOT_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
-        self.scene.robot.actuators["spot_hip"].stiffness = 100.0
-        self.scene.robot.actuators["spot_hip"].damping = 2.0
-        self.scene.robot.actuators["spot_knee"].stiffness = 100.0
-        self.scene.robot.actuators["spot_knee"].damping = 2.0
+        self.events.change_actuator_gains = None
+        self.scene.robot.init_state.joint_pos = {
+            ".*_hx": 0.0,
+            ".*_hy": math.pi / 4,
+            ".*_kn": -math.pi / 2,
+        }
 
         if self.scene.height_scanner is not None:
             self.scene.height_scanner.prim_path = "{ENV_REGEX_NS}/Robot/body"
@@ -73,6 +75,12 @@ class SpotCPGBaseEnvCfg(base_envs.QuadrupedCPGEnvCfg):
         self.actions.action.foot_offset_y = 0.11094
         self.actions.action.foot_offset_z = -0.465
         # CPG Parameters
+        self.actions.action.use_feedforward_inverse_pd_control = True
+        self.actions.action.tau_max = 45.0
+        self.actions.action.robot_kp = 60.0
+        self.actions.action.robot_kd = 1.5
+        self.actions.action.desired_kp = 100.0
+        self.actions.action.desired_kd = 2.0
         self.actions.action.gait_type = "trot"
         self.actions.action.use_duty_cycle = False
         # self.actions.action.gait_frequency_limit = 3.0
@@ -83,13 +91,13 @@ class SpotCPGBaseEnvCfg(base_envs.QuadrupedCPGEnvCfg):
         self.actions.action.oscilator_limit = (0.5, 2.0)
         self.actions.action.step_size = 0.1
         self.actions.action.ground_clearance = 0.15
-        self.actions.action.ground_penetration = 0.015
+        self.actions.action.ground_penetration = 0.01
         self.actions.action.feet_distance_x = 0.5957
         self.actions.action.feet_distance_y = 0.33188
         self.actions.action.body_height_offset = 0.0
         self.actions.action.body_pitch_offset = 0.0
         self.actions.action.use_joints_offset = True
-        self.actions.action.joints_offset_scale = 0.05
+        self.actions.action.joints_offset_scale = 0.1
 
 
 #########################
@@ -159,7 +167,7 @@ class SpotCPGBlindStairsEnvCfg(SpotCPGBaseEnvCfg, base_envs.QuadrupedBlindStairs
         base_envs.QuadrupedBlindStairsEnvCfg.__post_init__(self)
         self.events.change_gait = None
         self.actions.action.ground_clearance = 0.2
-        self.actions.action.ground_penetration = 0.02
+        # self.actions.action.ground_penetration = 0.02
 
 
 @configclass
@@ -169,7 +177,7 @@ class SpotCPGVisionEnvCfg(SpotCPGBaseEnvCfg, base_envs.QuadrupedVisionEnvCfg):
         base_envs.QuadrupedVisionEnvCfg.__post_init__(self)
         self.events.change_gait = None
         self.actions.action.ground_clearance = 0.2
-        self.actions.action.ground_penetration = 0.02
+        # self.actions.action.ground_penetration = 0.02
 
 
 class SpotCPGVisionStairsEnvCfg(SpotCPGBaseEnvCfg, base_envs.QuadrupedVisionStairsEnvCfg):
@@ -178,4 +186,4 @@ class SpotCPGVisionStairsEnvCfg(SpotCPGBaseEnvCfg, base_envs.QuadrupedVisionStai
         base_envs.QuadrupedVisionStairsEnvCfg.__post_init__(self)
         self.events.change_gait = None
         self.actions.action.ground_clearance = 0.2
-        self.actions.action.ground_penetration = 0.02
+        # self.actions.action.ground_penetration = 0.02

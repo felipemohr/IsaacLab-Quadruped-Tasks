@@ -339,9 +339,9 @@ class QuadrupedEnvCfg(ManagerBasedRLEnvCfg):
         """Post initialization"""
         self.sim.physx.gpu_max_rigid_patch_count *= 4
 
-        self.decimation = 4
+        self.decimation = 8
         self.episode_length_s = 20.0
-        self.sim.render_interval = 10
+        self.sim.render_interval = 12
         # simulation settings
         self.sim.dt = 1 / 400.0
         self.seed = 42

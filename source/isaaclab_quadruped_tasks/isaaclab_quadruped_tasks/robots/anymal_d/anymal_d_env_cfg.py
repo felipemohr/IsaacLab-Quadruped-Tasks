@@ -43,9 +43,6 @@ class AnymalDCPGBaseEnvCfg(base_envs.QuadrupedCPGEnvCfg):
         super().__post_init__()
 
         self.scene.robot = ANYMAL_D_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
-        self.scene.robot.actuators["legs"] = ANYDRIVE_3_SIMPLE_ACTUATOR_CFG
-        self.scene.robot.actuators["legs"].stiffness = 180.0
-        self.scene.robot.actuators["legs"].damping = 2.0
 
         if self.observations.policy.feet_contact is not None:
             self.observations.policy.feet_contact.params["sensor_cfg"].body_names = ".*_FOOT"
@@ -71,6 +68,12 @@ class AnymalDCPGBaseEnvCfg(base_envs.QuadrupedCPGEnvCfg):
         self.actions.action.foot_offset_y = 0.0
         self.actions.action.foot_offset_z = -0.6
         # CPG Parameters
+        self.actions.action.use_feedforward_inverse_pd_control = True
+        self.actions.action.tau_max = 80.0
+        self.actions.action.robot_kp = 40.0
+        self.actions.action.robot_kd = 5.0
+        self.actions.action.desired_kp = 80.0
+        self.actions.action.desired_kd = 5.0
         self.actions.action.gait_type = "trot"
         self.actions.action.use_duty_cycle = False
         # self.actions.action.gait_frequency_limit = 3.0
@@ -81,13 +84,13 @@ class AnymalDCPGBaseEnvCfg(base_envs.QuadrupedCPGEnvCfg):
         self.actions.action.oscilator_limit = (0.5, 2.0)
         self.actions.action.step_size = 0.1
         self.actions.action.ground_clearance = 0.15
-        self.actions.action.ground_penetration = 0.015
+        self.actions.action.ground_penetration = 0.01
         self.actions.action.feet_distance_x = 0.746
         self.actions.action.feet_distance_y = 0.218
         self.actions.action.body_height_offset = 0.0
         self.actions.action.body_pitch_offset = 0.0
         self.actions.action.use_joints_offset = True
-        self.actions.action.joints_offset_scale = 0.05
+        self.actions.action.joints_offset_scale = 0.1
 
 
 #########################
@@ -157,7 +160,7 @@ class AnymalDCPGBlindStairsEnvCfg(AnymalDCPGBaseEnvCfg, base_envs.QuadrupedBlind
         base_envs.QuadrupedBlindStairsEnvCfg.__post_init__(self)
         self.events.change_gait = None
         self.actions.action.ground_clearance = 0.2
-        self.actions.action.ground_penetration = 0.02
+        # self.actions.action.ground_penetration = 0.02
 
 @configclass
 class AnymalDCPGVisionEnvCfg(AnymalDCPGBaseEnvCfg, base_envs.QuadrupedVisionEnvCfg):
@@ -166,7 +169,7 @@ class AnymalDCPGVisionEnvCfg(AnymalDCPGBaseEnvCfg, base_envs.QuadrupedVisionEnvC
         base_envs.QuadrupedVisionEnvCfg.__post_init__(self)
         self.events.change_gait = None
         self.actions.action.ground_clearance = 0.2
-        self.actions.action.ground_penetration = 0.02
+        # self.actions.action.ground_penetration = 0.02
 
 
 class AnymalDCPGVisionStairsEnvCfg(AnymalDCPGBaseEnvCfg, base_envs.QuadrupedVisionStairsEnvCfg):
@@ -175,4 +178,4 @@ class AnymalDCPGVisionStairsEnvCfg(AnymalDCPGBaseEnvCfg, base_envs.QuadrupedVisi
         base_envs.QuadrupedVisionStairsEnvCfg.__post_init__(self)
         self.events.change_gait = None
         self.actions.action.ground_clearance = 0.2
-        self.actions.action.ground_penetration = 0.02
+        # self.actions.action.ground_penetration = 0.02

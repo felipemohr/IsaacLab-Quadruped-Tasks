@@ -33,6 +33,11 @@ class Go2CPGBaseEnvCfg(base_envs.QuadrupedCPGEnvCfg):
         super().__post_init__()
 
         self.scene.robot = UNITREE_GO2_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
+        self.scene.robot.init_state.joint_pos = {
+            ".*hip_joint": 0.0,
+            ".*thigh_joint": math.pi / 4,
+            ".*calf_joint": -math.pi / 2,
+        }
         self.scene.robot.actuators["base_legs"].stiffness = 100.0
         self.scene.robot.actuators["base_legs"].damping = 2.0
 
@@ -50,6 +55,7 @@ class Go2CPGBaseEnvCfg(base_envs.QuadrupedCPGEnvCfg):
         self.actions.action.foot_offset_y = 0.0955
         self.actions.action.foot_offset_z = -0.3012
         # CPG Parameters
+        self.actions.action.use_feedforward_inverse_pd_control = False
         self.actions.action.gait_type = "trot"
         self.actions.action.use_duty_cycle = False
         # self.actions.action.gait_frequency_limit = 3.0
@@ -66,7 +72,7 @@ class Go2CPGBaseEnvCfg(base_envs.QuadrupedCPGEnvCfg):
         self.actions.action.body_height_offset = 0.0
         self.actions.action.body_pitch_offset = 0.0
         self.actions.action.use_joints_offset = True
-        self.actions.action.joints_offset_scale = 0.05
+        self.actions.action.joints_offset_scale = 0.1
 
 
 ########################
@@ -137,7 +143,7 @@ class Go2CPGBlindStairsEnvCfg(Go2CPGBaseEnvCfg, base_envs.QuadrupedBlindStairsEn
         self.events.change_gait = None
         self.actions.action.body_height_offset = 0.05
         self.actions.action.ground_clearance = 0.15
-        self.actions.action.ground_penetration = 0.015
+        # self.actions.action.ground_penetration = 0.015
 
 
 @configclass
@@ -148,7 +154,7 @@ class Go2CPGVisionEnvCfg(Go2CPGBaseEnvCfg, base_envs.QuadrupedVisionEnvCfg):
         self.events.change_gait = None
         self.actions.action.body_height_offset = 0.05
         self.actions.action.ground_clearance = 0.15
-        self.actions.action.ground_penetration = 0.015
+        # self.actions.action.ground_penetration = 0.015
 
 
 class Go2CPGVisionStairsEnvCfg(Go2CPGBaseEnvCfg, base_envs.QuadrupedVisionStairsEnvCfg):
@@ -158,4 +164,4 @@ class Go2CPGVisionStairsEnvCfg(Go2CPGBaseEnvCfg, base_envs.QuadrupedVisionStairs
         self.events.change_gait = None
         self.actions.action.body_height_offset = 0.05
         self.actions.action.ground_clearance = 0.15
-        self.actions.action.ground_penetration = 0.015
+        # self.actions.action.ground_penetration = 0.015

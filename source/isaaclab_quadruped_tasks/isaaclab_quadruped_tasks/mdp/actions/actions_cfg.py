@@ -104,6 +104,19 @@ class QuadrupedCPGActionCfg(QuadrupedIKActionCfg):
 
     class_type: type[ActionTerm] = quadruped_actions.QuadrupedCPGAction
 
+    use_feedforward_inverse_pd_control: bool = False
+    """Wheter to use a feedforward inverse PD control to compensate the desired joint positions. Defaults to False"""
+    tau_max: float = 80.0
+    """The maximum torque of the joints, used if use_feedforward_inverse_pd_control is True. Defaults to 80.0"""
+    robot_kp: float = 40.0
+    """The kp constant of the joints PD control, used if use_feedforward_inverse_pd_control is True. Defaults to 40.0"""
+    robot_kd: float = 5.0
+    """The kd constant of the joints PD control, used if use_feedforward_inverse_pd_control is True. Defaults to 5.0"""
+    desired_kp: float = 80.0
+    """The desired kp constant for the joints PD control, used if use_feedforward_inverse_pd_control is True. Defaults to 80.0"""
+    desired_kd: float = 5.0
+    """The desired kd constant for the joints PD control, used if use_feedforward_inverse_pd_control is True. Defaults to 5.0"""
+
     use_duty_cycle: bool = False
     """Whether to use duty cycle as part of the Central Pattern Generator configuration. 
     If True, the action will provide the gait frequency and duty cycle, from which swing and stance frequencies 

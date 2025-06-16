@@ -36,6 +36,7 @@ class QuadrupedJointsEnvCfg(QuadrupedEnvCfg):
         self.observations.policy.cpg_state = None
 
         self.events.change_gait = None
+        self.events.change_actuator_gains = None
 
 
 @configclass
@@ -57,6 +58,8 @@ class QuadrupedCPGEnvCfg(QuadrupedEnvCfg):
         self.rewards.pen_action_rate = None
         self.rewards.pen_joint_accel = None
         self.rewards.pen_flat_orientation = None
+
+        self.events.change_actuator_gains = None
 
         # These parameters are for go2 robot
         self.actions.action = mdp.QuadrupedCPGActionCfg(asset_name="robot")

@@ -265,11 +265,21 @@ class QuadrupedIKAction(ActionTerm):
         # log the resolved joint names for debugging
         omni.log.info(
             f"Resolved joint names for the action term {self.__class__.__name__}:"
-            f" Front Left: {self._fl_joint_names} [{self._fl_joint_ids}]"
-            f" Front Right: {self._fr_joint_names} [{self._fr_joint_ids}]"
-            f" Rear Left: {self._rl_joint_names} [{self._rl_joint_ids}]"
-            f" Rear Right: {self._rr_joint_names} [{self._rr_joint_ids}]"
+            f" Front Left: {self._fl_joint_names} {self._fl_joint_ids}"
+            f" Front Right: {self._fr_joint_names} {self._fr_joint_ids}"
+            f" Rear Left: {self._rl_joint_names} {self._rl_joint_ids}"
+            f" Rear Right: {self._rr_joint_names} {self._rr_joint_ids}"
         )
+
+        joints_ik_order = [leg[joint] for leg in [self._fl_joint_names, self._fr_joint_names, self._rl_joint_names, self._rr_joint_names] for joint in range(3)]
+        joints_order_dict = (
+            dict(zip(self._fl_joint_ids, self._fl_joint_names)) |
+            dict(zip(self._fr_joint_ids, self._fr_joint_names)) |
+            dict(zip(self._rl_joint_ids, self._rl_joint_names)) |
+            dict(zip(self._rr_joint_ids, self._rr_joint_names))
+        )
+        self._joints_order = [joints_ik_order.index(joints_order_dict[idx]) for idx in range(12)]
+        self._processed_actions_order = [*self._fl_joint_ids, *self._fr_joint_ids, *self._rl_joint_ids, *self._rr_joint_ids]
 
         # create tensors for raw and processed actions
         self._raw_actions = torch.zeros(self.num_envs, self.action_dim, device=self.device)
@@ -419,6 +429,19 @@ class QuadrupedCPGAction(QuadrupedIKAction):
     cfg: actions_cfg.QuadrupedCPGActionCfg
     """The configuration of the action term."""
 
+    _use_feedforward_inverse_pd_control: bool = False
+    """Wheter to use a feedforward inverse PD control to compensate the desired joint positions. Defaults to False"""
+    _tau_max: float
+    """The maximum torque of the joints, used if use_feedforward_inverse_pd_control is True. Defaults to 80.0"""
+    _robot_kp: float
+    """The kp constant of the joints PD control, used if use_feedforward_inverse_pd_control is True. Defaults to 40.0"""
+    _robot_kd: float
+    """The kd constant of the joints PD control, used if use_feedforward_inverse_pd_control is True. Defaults to 5.0"""
+    _desired_kp: float
+    """The desired kp constant for the joints PD control, used if use_feedforward_inverse_pd_control is True. Defaults to 80.0"""
+    _desired_kd: float
+    """The desired kd constant for the joints PD control, used if use_feedforward_inverse_pd_control is True. Defaults to 5.0"""
+
     _use_duty_cycle: bool = True
     """Whether to use the duty_cycle to compute swing and stance frequencies to generate CPG sinal or not."""
     _duty_cycle_limit: tuple[float, float]
@@ -470,7 +493,7 @@ class QuadrupedCPGAction(QuadrupedIKAction):
 
         # CPG variables
         self._coupling_weight = torch.ones(env.num_envs, 1, device=self.device)
-        self._amplitude_mu = torch.ones(env.num_envs, 4, device=self.device)
+        self._amplitude_mu = torch.ones(env.num_envs, 1, device=self.device)
         self._duty_cycle = torch.zeros(env.num_envs, 1, device=self.device)
         self._gait_frequency = torch.zeros(env.num_envs, 1, device=self.device)
         self._swing_frequency = torch.zeros(env.num_envs, 1, device=self.device)
@@ -504,7 +527,45 @@ class QuadrupedCPGAction(QuadrupedIKAction):
             raise ValueError(
                 f"Unsupported coupling_weight type: {type(cfg.coupling_weight)}. Supported type is float."
             )
-        
+
+        # Parse use feedforward inverse PD control
+        if isinstance(cfg.use_feedforward_inverse_pd_control, bool):
+            self._use_feedforward_inverse_pd_control = bool(cfg.use_feedforward_inverse_pd_control)
+        else:
+            raise ValueError(
+                f"Unsupported use_feedforward_inverse_pd_control type: {type(cfg.use_feedforward_inverse_pd_control)}. Supported type is bool."
+            )
+        if isinstance(cfg.tau_max, (float, int)):
+            self._tau_max = float(abs(cfg.tau_max))
+        else:
+            raise ValueError(
+                f"Unsupported tau_max type: {type(cfg.tau_max)}. Supported type is float."
+            )
+        if isinstance(cfg.robot_kp, (float, int)):
+            self._robot_kp = float(abs(cfg.robot_kp))
+        else:
+            raise ValueError(
+                f"Unsupported robot_kp type: {type(cfg.robot_kp)}. Supported type is float."
+            )
+        if isinstance(cfg.robot_kd, (float, int)):
+            self._robot_kd = float(abs(cfg.robot_kd))
+        else:
+            raise ValueError(
+                f"Unsupported robot_kd type: {type(cfg.robot_kd)}. Supported type is float."
+            )
+        if isinstance(cfg.desired_kp, (float, int)):
+            self._desired_kp = float(abs(cfg.desired_kp))
+        else:
+            raise ValueError(
+                f"Unsupported desired_kp type: {type(cfg.desired_kp)}. Supported type is float."
+            )
+        if isinstance(cfg.desired_kd, (float, int)):
+            self._desired_kd = float(abs(cfg.desired_kd))
+        else:
+            raise ValueError(
+                f"Unsupported desired_kd type: {type(cfg.desired_kd)}. Supported type is float."
+            )
+
         # Parse use duty cycle and gait frequency and duty cycle limits
         if isinstance(cfg.use_duty_cycle, bool):
             self._use_duty_cycle = bool(cfg.use_duty_cycle)
@@ -662,10 +723,10 @@ class QuadrupedCPGAction(QuadrupedIKAction):
 
     @property
     def action_dim(self) -> int:
-        # amplitude_mu for each foot, swing and stance frequencies and omnidirectional phase
+        # amplitude_mu, swing and stance frequencies
         # if use_duty_cycle is True, the action is composed by the gait frequency and duty cycle, instead of 
         # swing and stance frequencies, if use_joints_offset is True, includes the offset for each of the joints
-        return 18 if self._use_joints_offset else 6
+        return 15 if self._use_joints_offset else 3
 
     @property
     def raw_actions(self) -> torch.Tensor:
@@ -691,8 +752,18 @@ class QuadrupedCPGAction(QuadrupedIKAction):
 
         super().process_actions(cpg_processed_action)
 
+        if self._use_feedforward_inverse_pd_control:
+            q = self._asset.data.joint_pos.clone()
+            qd = self._asset.data.joint_vel.clone()
+            qs2 = self._processed_actions[:, self._joints_order].clone()
+
+            tau2 = self._desired_kp * (qs2 - q) - self._desired_kd * qd
+            qs1 = (torch.clamp(tau2, -self._tau_max, self._tau_max) + self._robot_kp * q + self._robot_kd * qd) / self._robot_kp
+
+            self._processed_actions = qs1[:, self._processed_actions_order].clone()
+
         if self._use_joints_offset:
-            self._joint_offsets = self._joints_offset_scale * actions[:, 6:]
+            self._joint_offsets = self._joints_offset_scale * actions[:, 3:]
             self._processed_actions += self._joint_offsets
 
     def reset(self, env_ids: Sequence[int] | None = None) -> None:
@@ -817,11 +888,12 @@ class QuadrupedCPGAction(QuadrupedIKAction):
             oscilator_min, oscilator_max = self._oscilator_limit
             oscilator_difference = oscilator_max - oscilator_min
             self._amplitude_mu = oscilator_min + oscilator_difference * torch.sigmoid(
-                actions[:, :4] / oscilator_difference
-        )
+                actions[:, 0] / oscilator_difference
+            )
         else:
-            self._amplitude_mu = actions[:, :4]
+            self._amplitude_mu = actions[:, 0]
         
+        self._amplitude_mu = self._amplitude_mu.unsqueeze(1)
         # If the velocity commands are too small, the amplitudes of the CPG are set to zero
         self._amplitude_mu = torch.where(mask, 0.0, self._amplitude_mu)
 
@@ -831,17 +903,17 @@ class QuadrupedCPGAction(QuadrupedIKAction):
                 duty_cycle_min, duty_cycle_max = self._duty_cycle_limit
                 duty_cycle_difference = duty_cycle_max - duty_cycle_min
                 self._duty_cycle = duty_cycle_min + duty_cycle_difference * torch.sigmoid(
-                    actions[:, 4] / duty_cycle_difference
+                    actions[:, 1] / duty_cycle_difference
             )
             else:
-                self._duty_cycle = torch.sigmoid(actions[:, 4])
+                self._duty_cycle = torch.sigmoid(actions[:, 1])
 
             if self._gait_frequency_limit < torch.inf:
                 self._gait_frequency[:, 0] = self._gait_frequency_limit * torch.sigmoid(
-                    actions[:, 5] / self._gait_frequency_limit
+                    actions[:, 2] / self._gait_frequency_limit
                 )
             else:
-                self._gait_frequency[:, 0] = actions[:, 5]
+                self._gait_frequency[:, 0] = actions[:, 2]
             
             self._swing_frequency = self._gait_frequency / (1.0 - self._duty_cycle)
             self._stance_frequency = self._gait_frequency / self._duty_cycle
@@ -850,17 +922,17 @@ class QuadrupedCPGAction(QuadrupedIKAction):
         else:
             if self._swing_frequency_limit < torch.inf:
                 self._swing_frequency[:, 0] = self._swing_frequency_limit * torch.sigmoid(
-                    actions[:, 4] / self._swing_frequency_limit
+                    actions[:, 1] / self._swing_frequency_limit
                 )
             else:
-                self._swing_frequency[:, 0] = actions[:, 4]
+                self._swing_frequency[:, 0] = actions[:, 1]
 
             if self._stance_frequency_limit < torch.inf:
                 self._stance_frequency[:, 0] = self._stance_frequency_limit * torch.sigmoid(
-                    actions[:, 5] / self._stance_frequency_limit
+                    actions[:, 2] / self._stance_frequency_limit
                 )
             else:
-                self._stance_frequency[:, 0] = actions[:, 5]
+                self._stance_frequency[:, 0] = actions[:, 2]
 
         # Steps the Central Pattern Generator
         self._amplitude_d2r = self._convergence_factor_a * (
