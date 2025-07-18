@@ -5,7 +5,7 @@ Copyright (c) 2024, Felipe Mohr Santos
 
 from isaaclab.utils import configclass
 from isaaclab_quadruped_tasks.robots import base_envs_cfg as base_envs
-from isaaclab_assets.robots.anymal import ANYMAL_D_CFG, ANYDRIVE_3_SIMPLE_ACTUATOR_CFG
+from isaaclab_assets.robots.anymal import ANYMAL_D_CFG
 
 
 ########################
@@ -169,7 +169,6 @@ class AnymalDCPGVisionEnvCfg(AnymalDCPGBaseEnvCfg, base_envs.QuadrupedVisionEnvC
         base_envs.QuadrupedVisionEnvCfg.__post_init__(self)
         self.events.change_gait = None
         self.actions.action.ground_clearance = 0.2
-        # self.actions.action.ground_penetration = 0.02
 
 
 class AnymalDCPGVisionStairsEnvCfg(AnymalDCPGBaseEnvCfg, base_envs.QuadrupedVisionStairsEnvCfg):
@@ -178,4 +177,3 @@ class AnymalDCPGVisionStairsEnvCfg(AnymalDCPGBaseEnvCfg, base_envs.QuadrupedVisi
         base_envs.QuadrupedVisionStairsEnvCfg.__post_init__(self)
         self.events.change_gait = None
         self.actions.action.ground_clearance = 0.2
-        # self.actions.action.ground_penetration = 0.02

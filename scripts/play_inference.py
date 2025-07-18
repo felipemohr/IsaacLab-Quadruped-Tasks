@@ -10,6 +10,7 @@ parser.add_argument("--robot", type=str, choices=["anymal_d", "spot", "go2"], de
 parser.add_argument("--task_type", type=str, choices=["cpg_blind", "cpg_vision", "joints_blind", "joints_vision"], default="cpg_blind", 
                     help="The type of task. Options: 'cpg_blind', 'cpg_vision', 'joints_blind', 'joints_vision'.")
 parser.add_argument("--use_vision", action="store_true", default=False, help="Use height map from vision.")
+parser.add_argument("--only_cpg", action="store_true", default=False, help="Whether to use joint offsets for CPG tasks or not.")
 parser.add_argument("--teleop", type=str, default=None, choices=["keyboard", "gamepad"], 
                     help="The teleop device to use. Options: 'keyboard', 'gamepad'.")
 parser.add_argument("--use_pi_controller", action="store_true", default=False, 
@@ -22,13 +23,17 @@ parser.add_argument("--use_zigzag_trajectory", action="store_true", default=Fals
                     help="Use velocity commands to perform a zigzag trajectory.")
 parser.add_argument("--use_higher_velocities", action="store_true", default=False, 
                     help="Test velocity commands higher than those seem during training.")
-parser.add_argument("--terrain", type=str, default=None, choices=["flat", "random", "waves", "boxes", "slope", "stairs"])
+parser.add_argument("--terrain", type=str, default=None, 
+                    choices=["flat", "random", "waves", "boxes", "slope", "slope_down", "stairs", "stairs_down"])
 parser.add_argument("--terrain_difficulty", type=float, default=0.5, 
                     help="The difficulty of the terrain (Betwwen 0 and 1).")
 parser.add_argument("--push_robot", action="store_true", default=False, 
                     help="Push the robot periodically by randomly increasing the root velocity.")
-parser.add_argument("--push_interval", type=float, default=5.0, 
-                    help="The interval between each push, in seconds.")
+parser.add_argument("--push_interval", type=float, default=5.0, help="The interval between each push, in seconds.")
+parser.add_argument("--define_pushes", action="store_true", default=False, help="Use random values to push the robot.")
+parser.add_argument("--push_vel_x", type=float, default=0.0, help="The linear velocity on x axis to push the robot.")
+parser.add_argument("--push_vel_y", type=float, default=0.0, help="The linear velocity on y axis to push the robot.")
+parser.add_argument("--push_vel_yaw", type=float, default=0.0, help="The angular velocity on z axis to push the robot.")
 parser.add_argument("--num_envs", type=int, default=1, help="Number of environments to simulate.")
 parser.add_argument("--data_collection_interval", type=float, default=0.0, 
                     help="The interval between each data collection, in seconds.")
@@ -61,6 +66,8 @@ from isaaclab.terrains import (
     HfWaveTerrainCfg,
     MeshRandomGridTerrainCfg,
     HfInvertedPyramidSlopedTerrainCfg,
+    HfPyramidSlopedTerrainCfg,
+    MeshInvertedPyramidStairsTerrainCfg,
     MeshPyramidStairsTerrainCfg,
 )
 
@@ -98,15 +105,19 @@ def main():
     if args_cli.terrain == "flat":
         sub_terrains = {"flat": MeshPlaneTerrainCfg()}
     elif args_cli.terrain == "random":
-        sub_terrains = {"random_rough": HfRandomUniformTerrainCfg(noise_range=(0.02, 0.10), noise_step=0.02, border_width=0.25)}
+        sub_terrains = {"random": HfRandomUniformTerrainCfg(noise_range=(0.02, 0.10), noise_step=0.02, border_width=0.25)}
     elif args_cli.terrain == "waves":
         sub_terrains = {"waves": HfWaveTerrainCfg(amplitude_range=(0.02, 0.12), num_waves=25, border_width=0.25)}
     elif args_cli.terrain == "boxes":
         sub_terrains = {"boxes": MeshRandomGridTerrainCfg(grid_width=0.45, grid_height_range=(0.02, 0.16), platform_width=2.0)}
     elif args_cli.terrain == "slope":
         sub_terrains = {"slope":  HfInvertedPyramidSlopedTerrainCfg(slope_range=(0.0, 0.4), platform_width=2.0, border_width=0.25)}
+    elif args_cli.terrain == "slope_down":
+        sub_terrains = {"slope_down":  HfPyramidSlopedTerrainCfg(slope_range=(0.0, 0.4), platform_width=2.0, border_width=0.25)}
     elif args_cli.terrain == "stairs":
-        sub_terrains = {"pyramid_stairs_inv": MeshPyramidStairsTerrainCfg(step_height_range=(0.05, 0.23), step_width=0.3, platform_width=3.0, border_width=1.0, holes=False)}
+        sub_terrains = {"stairs": MeshInvertedPyramidStairsTerrainCfg(step_height_range=(0.05, 0.23), step_width=0.3, platform_width=3.0, border_width=1.0, holes=False)}
+    elif args_cli.terrain == "stairs_down":
+        sub_terrains = {"stairs_down": MeshPyramidStairsTerrainCfg(step_height_range=(0.05, 0.23), step_width=0.3, platform_width=3.0, border_width=1.0, holes=False)}
 
     terrain_size = 25.0
     if args_cli.terrain == "flat":
@@ -142,6 +153,9 @@ def main():
             env_cfg.actions.action.body_height_offset = 0.05
             env_cfg.actions.action.ground_clearance = 0.15
             env_cfg.actions.action.ground_penetration = 0.015
+
+    if "cpg" in args_cli.task_type and args_cli.only_cpg:
+        env_cfg.actions.action.joints_offset_scale = 0.0
 
     # Change some parameters of the environment for play
     env_cfg.scene.num_envs = args_cli.num_envs
@@ -322,16 +336,22 @@ def main():
             else:
                 cmd_vel = setpoint_vel
 
-
             # Sets the velocity command for the policy
             obs["policy"][:, :3] = cmd_vel
 
             # Randomly pushes the robot base, if required
             if args_cli.push_robot:
-                if t % args_cli.push_interval < env.step_dt:
+                if t % args_cli.push_interval < env.step_dt and t > env.step_dt:
                     print("Pushing the robot")
-                    push_by_setting_velocity(env, velocity_range={"x": (-1.0, 1.0), "y": (-1.0, 1.0), "yaw": (-1.57, 1.57)}, 
-                                             env_ids=torch.tensor([0]).to(args_cli.device))
+                    if args_cli.define_pushes:
+                        push_vel_range = {"x": (args_cli.push_vel_x, args_cli.push_vel_x), 
+                                          "y": (args_cli.push_vel_y, args_cli.push_vel_y), 
+                                          "yaw": (args_cli.push_vel_yaw, args_cli.push_vel_yaw)}
+                    else:
+                        push_vel_range = {"x": (-2.5, 2.5), "y": (-2.5, 2.5), "yaw": (-6.28, 6.28)}
+                    push_by_setting_velocity(env, velocity_range=push_vel_range, 
+                                             env_ids=torch.tensor(range(args_cli.num_envs)).to(args_cli.device))
+
 
             # Computes the action
             actions = torch.clamp(policy(obs["policy"]), -100.0, 100.0)
