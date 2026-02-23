@@ -155,6 +155,24 @@ run_terrain_experiments()
   done
 }
 
-run_vel_tracking_experiments "go2" "spot" "anymal_d"
-run_external_disturbances_experiments "go2 spot anymal_d" "cpg_blind joints_blind"
-run_terrain_experiments "go2 spot anymal_d" "cpg_blind cpg_vision joints_blind joints_vision"
+# run_vel_tracking_experiments "go2" "spot" "anymal_d"
+# run_external_disturbances_experiments "go2 spot anymal_d" "cpg_blind joints_blind"
+# run_terrain_experiments "go2 spot anymal_d" "cpg_blind cpg_vision joints_blind joints_vision"
+
+# run_inference anymal_d test cpg_vision slope_down 0.55 30.0 --use_forward_cmds --device cpu #--num_envs 4
+# run_inference anymal_d test cpg_vision slope 0.5 30.0 --use_forward_cmds --device cpu #--num_envs 4
+# run_inference spot test cpg_vision random 1.0 30.0 --use_forward_cmds --device cpu #--num_envs 4
+# run_inference go2 test cpg_vision stairs 0.3 30.0 --use_forward_cmds --device cpu #--num_envs 4
+# run_inference go2 test cpg_vision stairs_down 0.5 30.0 --use_forward_cmds --device cpu #--num_envs 4
+# run_inference anymal_d test cpg_vision waves 1.0 30.0 --use_forward_cmds --device cpu #--num_envs 4
+# run_inference spot test cpg_vision boxes 0.7 30.0 --use_forward_cmds --device cpu #--num_envs 4
+
+run_inference go2 test_disturbanve cpg_blind random 1.0 30.0 \
+  --use_predefined_cmds \
+  --push_robot \
+  --push_interval 4.5 \
+  --define_pushes \
+  --push_vel_x 1.0 \
+  --push_vel_y 2.0 \
+  --push_vel_yaw 5.0 \
+  --device cpu

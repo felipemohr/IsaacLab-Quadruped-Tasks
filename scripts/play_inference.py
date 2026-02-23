@@ -148,7 +148,7 @@ def main():
     elif "cpg" in args_cli.task_type:
         if args_cli.robot == "anymal_d" or args_cli.robot == "spot":
             env_cfg.actions.action.ground_clearance = 0.2
-            env_cfg.actions.action.ground_penetration = 0.02
+            env_cfg.actions.action.ground_penetration = 0.015
         else:
             env_cfg.actions.action.body_height_offset = 0.05
             env_cfg.actions.action.ground_clearance = 0.15
@@ -251,8 +251,7 @@ def main():
             if teleop_interface is not None:
                 setpoint_vel = torch.tensor(teleop_interface.advance()).to(args_cli.device)
                 setpoint_vel *= torch.tensor([1, -1, -1]).to(args_cli.device)
-                setpoint_vel = cmd_vel.expand(args_cli.num_envs, 3)
-
+                setpoint_vel = setpoint_vel.expand(args_cli.num_envs, 3)
 
             # If the use_forward_cmds is used, predefined the velocity commands will be set
             elif args_cli.use_forward_cmds:
